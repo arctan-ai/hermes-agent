@@ -1,0 +1,18 @@
+[Unit]
+Description=Arctan MCP Server (Plane + ClickHouse + AWS + Codebase Knowledge)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=ubuntu
+Group=ubuntu
+WorkingDirectory=/home/ubuntu/.hermes/hermes-agent/arctan-infra/mcp-server
+EnvironmentFile=/home/ubuntu/.hermes/.env
+ExecStart=/usr/bin/python3 /home/ubuntu/.hermes/hermes-agent/arctan-infra/mcp-server/server.py
+Restart=on-failure
+RestartSec=5
+SyslogIdentifier=arctan-mcp
+
+[Install]
+WantedBy=multi-user.target
