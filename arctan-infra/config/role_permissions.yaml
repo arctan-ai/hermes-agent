@@ -33,7 +33,7 @@ roles:
   admin:
     allowed_toolsets: all
 
-  # ── User: read/query access + limited write ──
+  # ── User: read/query access + integrations, no shell/file writes ──
   user:
     allowed_toolsets:
       - web
@@ -45,6 +45,9 @@ roles:
       - memory
       - session_search
       - clarify
+      - plane          # Plane.so project management (query + update)
+      - clickhouse     # ClickHouse analytics (read-only SQL)
+      - aws            # AWS infrastructure (read-only queries)
     # Deny dangerous individual tools within allowed toolsets
     denied_tools:
       - write_file
@@ -58,8 +61,10 @@ roles:
       - skills
       - clarify
       - session_search
+      - plane          # Can query Plane (but not update)
     denied_tools:
       - skill_manage
+      - plane_update   # No issue creation/modification for pending users
 
   # ── Default: fallback for unknown roles ──
   default:
@@ -73,10 +78,14 @@ roles:
       - memory
       - session_search
       - clarify
+      - plane
+      - clickhouse
+      - aws
     denied_tools:
       - write_file
       - patch
       - skill_manage
+      - plane_update
 
 # =============================================================================
 # Per-email overrides (optional)
