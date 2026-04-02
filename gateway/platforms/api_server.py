@@ -383,6 +383,7 @@ class APIServerAdapter(BasePlatformAdapter):
         stream_delta_callback=None,
         tool_progress_callback=None,
         memory_dir=None,
+        org_memory_dir=None,
         user_id: Optional[str] = None,
     ) -> Any:
         """
@@ -418,6 +419,7 @@ class APIServerAdapter(BasePlatformAdapter):
             stream_delta_callback=stream_delta_callback,
             tool_progress_callback=tool_progress_callback,
             memory_dir=memory_dir,
+            org_memory_dir=org_memory_dir,
             user_id=user_id,
         )
         return agent
@@ -482,6 +484,7 @@ class APIServerAdapter(BasePlatformAdapter):
 
         # Build per-user memory directory if user identity is present
         per_user_memory_dir = None
+        org_memory_dir = None
         if owui_user_id:
             from pathlib import Path
             from hermes_constants import get_hermes_home
@@ -490,6 +493,8 @@ class APIServerAdapter(BasePlatformAdapter):
             safe_uid = _re.sub(r'[^a-zA-Z0-9_-]', '_', owui_user_id)
             per_user_memory_dir = get_hermes_home() / "memories" / "users" / safe_uid
             per_user_memory_dir.mkdir(parents=True, exist_ok=True)
+            # Shared org memory (read-only for all users)
+            org_memory_dir = get_hermes_home() / "memories" / "org"
 
         # Extract system message (becomes ephemeral system prompt layered ON TOP of core)
         system_prompt = None
@@ -590,6 +595,7 @@ class APIServerAdapter(BasePlatformAdapter):
                 tool_progress_callback=_on_tool_progress,
                 agent_ref=agent_ref,
                 memory_dir=per_user_memory_dir,
+                org_memory_dir=org_memory_dir,
                 user_id=owui_user_id or None,
             ))
 
@@ -606,6 +612,7 @@ class APIServerAdapter(BasePlatformAdapter):
                 ephemeral_system_prompt=system_prompt,
                 session_id=session_id,
                 memory_dir=per_user_memory_dir,
+                org_memory_dir=org_memory_dir,
                 user_id=owui_user_id or None,
             )
 
@@ -856,6 +863,7 @@ class APIServerAdapter(BasePlatformAdapter):
         owui_user_role_r = request.headers.get("X-OpenWebUI-User-Role", "").strip()
 
         per_user_memory_dir_r = None
+        org_memory_dir_r = None
         if owui_user_id_r:
             from pathlib import Path
             from hermes_constants import get_hermes_home
@@ -863,6 +871,7 @@ class APIServerAdapter(BasePlatformAdapter):
             safe_uid = _re.sub(r'[^a-zA-Z0-9_-]', '_', owui_user_id_r)
             per_user_memory_dir_r = get_hermes_home() / "memories" / "users" / safe_uid
             per_user_memory_dir_r.mkdir(parents=True, exist_ok=True)
+            org_memory_dir_r = get_hermes_home() / "memories" / "org"
 
         if owui_user_name_r:
             user_ctx_parts = [f"Current user: {owui_user_name_r}"]
@@ -886,6 +895,7 @@ class APIServerAdapter(BasePlatformAdapter):
                 ephemeral_system_prompt=instructions,
                 session_id=session_id,
                 memory_dir=per_user_memory_dir_r,
+                org_memory_dir=org_memory_dir_r,
                 user_id=owui_user_id_r or None,
             )
 
@@ -1297,6 +1307,7 @@ class APIServerAdapter(BasePlatformAdapter):
         tool_progress_callback=None,
         agent_ref: Optional[list] = None,
         memory_dir=None,
+        org_memory_dir=None,
         user_id: Optional[str] = None,
     ) -> tuple:
         """
@@ -1319,6 +1330,7 @@ class APIServerAdapter(BasePlatformAdapter):
                 stream_delta_callback=stream_delta_callback,
                 tool_progress_callback=tool_progress_callback,
                 memory_dir=memory_dir,
+                org_memory_dir=org_memory_dir,
                 user_id=user_id,
             )
             if agent_ref is not None:

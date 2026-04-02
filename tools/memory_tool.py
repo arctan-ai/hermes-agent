@@ -96,18 +96,25 @@ class MemoryStore:
         Never mutated mid-session. Keeps prefix cache stable.
       - memory_entries / user_entries: live state, mutated by tool calls, persisted to disk.
         Tool responses always reflect this live state.
+
+    Optionally loads a read-only **org memory** layer from a shared directory
+    (``~/.hermes/memories/org/``). Org entries are injected into every user's
+    system prompt but cannot be mutated through the per-user memory tool.
     """
 
     def __init__(self, memory_char_limit: int = 2200, user_char_limit: int = 1375,
-                 memory_dir: Path = None):
+                 memory_dir: Path = None, org_memory_dir: Path = None):
         self.memory_entries: List[str] = []
         self.user_entries: List[str] = []
+        self.org_entries: List[str] = []
         self.memory_char_limit = memory_char_limit
         self.user_char_limit = user_char_limit
         # Allow per-user memory directories; fall back to global MEMORY_DIR
         self._memory_dir = memory_dir or MEMORY_DIR
+        # Shared org memory directory (read-only for individual users)
+        self._org_memory_dir = org_memory_dir
         # Frozen snapshot for system prompt -- set once at load_from_disk()
-        self._system_prompt_snapshot: Dict[str, str] = {"memory": "", "user": ""}
+        self._system_prompt_snapshot: Dict[str, str] = {"memory": "", "user": "", "org": ""}
 
     def load_from_disk(self):
         """Load entries from MEMORY.md and USER.md, capture system prompt snapshot."""
@@ -120,10 +127,17 @@ class MemoryStore:
         self.memory_entries = list(dict.fromkeys(self.memory_entries))
         self.user_entries = list(dict.fromkeys(self.user_entries))
 
+        # Load org memory (read-only, shared across all users)
+        self.org_entries = []
+        if self._org_memory_dir and self._org_memory_dir.exists():
+            self.org_entries = self._read_file(self._org_memory_dir / "ORG.md")
+            self.org_entries = list(dict.fromkeys(self.org_entries))
+
         # Capture frozen snapshot for system prompt injection
         self._system_prompt_snapshot = {
             "memory": self._render_block("memory", self.memory_entries),
             "user": self._render_block("user", self.user_entries),
+            "org": self._render_block("org", self.org_entries),
         }
 
     @staticmethod
@@ -359,9 +373,15 @@ class MemoryStore:
         if not entries:
             return ""
 
-        limit = self._char_limit(target)
         content = ENTRY_DELIMITER.join(entries)
         current = len(content)
+
+        if target == "org":
+            header = "ORG MEMORY (shared organizational knowledge — read-only)"
+            separator = "═" * 46
+            return f"{separator}\n{header}\n{separator}\n{content}"
+
+        limit = self._char_limit(target)
         pct = min(100, int((current / limit) * 100)) if limit > 0 else 0
 
         if target == "user":

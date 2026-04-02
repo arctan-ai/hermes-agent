@@ -518,6 +518,7 @@ class AIAgent:
         pass_session_id: bool = False,
         persist_session: bool = True,
         memory_dir: "Path" = None,
+        org_memory_dir: "Path" = None,
         user_id: str = None,
     ):
         """
@@ -1068,6 +1069,7 @@ class AIAgent:
                         memory_char_limit=mem_config.get("memory_char_limit", 2200),
                         user_char_limit=mem_config.get("user_char_limit", 1375),
                         memory_dir=memory_dir,
+                        org_memory_dir=org_memory_dir,
                     )
                     self._memory_store.load_from_disk()
             except Exception:
@@ -2685,6 +2687,10 @@ class AIAgent:
             prompt_parts.append(system_message)
 
         if self._memory_store:
+            # Org memory (shared, read-only) -- injected before personal memory
+            org_block = self._memory_store.format_for_system_prompt("org")
+            if org_block:
+                prompt_parts.append(org_block)
             if self._memory_enabled:
                 mem_block = self._memory_store.format_for_system_prompt("memory")
                 if mem_block:
