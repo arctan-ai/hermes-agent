@@ -373,6 +373,94 @@ class APIServerAdapter(BasePlatformAdapter):
         )
 
     # ------------------------------------------------------------------
+    # Role-based tool permissions
+    # ------------------------------------------------------------------
+
+    _role_permissions_cache: Optional[dict] = None
+    _role_permissions_mtime: float = 0.0
+
+    @classmethod
+    def _load_role_permissions(cls) -> dict:
+        """Load role_permissions.yaml with mtime-based caching (auto-reloads on change)."""
+        from hermes_constants import get_hermes_home
+        perms_path = get_hermes_home() / "role_permissions.yaml"
+        if not perms_path.exists():
+            cls._role_permissions_cache = None
+            return {}
+        try:
+            mtime = perms_path.stat().st_mtime
+            if cls._role_permissions_cache is not None and mtime == cls._role_permissions_mtime:
+                return cls._role_permissions_cache
+            import yaml
+            with open(perms_path) as f:
+                data = yaml.safe_load(f) or {}
+            cls._role_permissions_cache = data
+            cls._role_permissions_mtime = mtime
+            logger.info("Loaded role permissions from %s", perms_path)
+            return data
+        except Exception as e:
+            logger.warning("Failed to load role_permissions.yaml: %s", e)
+            return {}
+
+    @classmethod
+    def _resolve_role_toolsets(
+        cls,
+        platform_toolsets: list,
+        user_role: str = "",
+        user_email: str = "",
+    ) -> list:
+        """
+        Filter platform toolsets based on user role and email.
+
+        Returns the filtered list of enabled toolsets for this user.
+        If no role_permissions.yaml exists, returns platform_toolsets unchanged.
+        """
+        perms = cls._load_role_permissions()
+        if not perms:
+            return platform_toolsets
+
+        roles_config = perms.get("roles", {})
+        user_overrides = perms.get("user_overrides", {})
+
+        # Check for per-email override first
+        effective_role = user_role.lower().strip() if user_role else "default"
+        if user_email and user_email.lower() in user_overrides:
+            override = user_overrides[user_email.lower()]
+            if isinstance(override, str):
+                effective_role = override  # email maps to a role name
+            elif isinstance(override, dict):
+                # Direct toolset config for this email
+                role_cfg = override
+                return cls._apply_role_config(role_cfg, platform_toolsets)
+
+        # Look up role config (fall back to "default")
+        role_cfg = roles_config.get(effective_role, roles_config.get("default", {}))
+        return cls._apply_role_config(role_cfg, platform_toolsets)
+
+    @staticmethod
+    def _apply_role_config(role_cfg: dict, platform_toolsets: list) -> list:
+        """Apply a single role config dict to filter toolsets."""
+        if not role_cfg:
+            return platform_toolsets
+
+        allowed = role_cfg.get("allowed_toolsets", "all")
+        if allowed == "all":
+            result = list(platform_toolsets)
+        elif isinstance(allowed, list):
+            allowed_set = set(allowed)
+            result = [ts for ts in platform_toolsets if ts in allowed_set]
+        else:
+            result = list(platform_toolsets)
+
+        # Remove explicitly denied toolsets
+        denied_toolsets = role_cfg.get("denied_toolsets", [])
+        if denied_toolsets:
+            denied_set = set(denied_toolsets)
+            result = [ts for ts in result if ts not in denied_set]
+
+        return sorted(result) if result else result
+
+    # ------------------------------------------------------------------
     # Agent creation helper
     # ------------------------------------------------------------------
 
@@ -385,6 +473,8 @@ class APIServerAdapter(BasePlatformAdapter):
         memory_dir=None,
         org_memory_dir=None,
         user_id: Optional[str] = None,
+        user_role: Optional[str] = None,
+        user_email: Optional[str] = None,
     ) -> Any:
         """
         Create an AIAgent instance using the gateway's runtime config.
@@ -393,6 +483,9 @@ class APIServerAdapter(BasePlatformAdapter):
         base_url, etc. from config.yaml / env vars.  Toolsets are resolved
         from config.yaml platform_toolsets.api_server (same as all other
         gateway platforms), falling back to the hermes-api-server default.
+
+        If role_permissions.yaml exists, toolsets are further filtered based
+        on the user's role (from X-OpenWebUI-User-Role header) or email.
         """
         from run_agent import AIAgent
         from gateway.run import _resolve_runtime_agent_kwargs, _resolve_gateway_model, _load_gateway_config
@@ -402,7 +495,17 @@ class APIServerAdapter(BasePlatformAdapter):
         model = _resolve_gateway_model()
 
         user_config = _load_gateway_config()
-        enabled_toolsets = sorted(_get_platform_tools(user_config, "api_server"))
+        platform_toolsets = sorted(_get_platform_tools(user_config, "api_server"))
+
+        # Apply role-based filtering
+        enabled_toolsets = self._resolve_role_toolsets(
+            platform_toolsets,
+            user_role=user_role or "",
+            user_email=user_email or "",
+        )
+
+        # Get per-tool deny list for fine-grained control
+        denied_tools = self._get_denied_tools(user_role or "", user_email or "")
 
         max_iterations = int(os.getenv("HERMES_MAX_ITERATIONS", "90"))
 
@@ -422,7 +525,38 @@ class APIServerAdapter(BasePlatformAdapter):
             org_memory_dir=org_memory_dir,
             user_id=user_id,
         )
+
+        # Post-creation: remove individually denied tools from the agent
+        if denied_tools and agent.tools:
+            denied_set = set(denied_tools)
+            original_count = len(agent.tools)
+            agent.tools = [t for t in agent.tools if t["function"]["name"] not in denied_set]
+            agent.valid_tool_names -= denied_set
+            if len(agent.tools) < original_count:
+                logger.info("Role filter: removed %d denied tools for role=%s email=%s",
+                           original_count - len(agent.tools), user_role, user_email)
+
         return agent
+
+    def _get_denied_tools(self, user_role: str, user_email: str) -> list:
+        """Get the list of individually denied tool names for a user."""
+        perms = self._load_role_permissions()
+        if not perms:
+            return []
+
+        roles_config = perms.get("roles", {})
+        user_overrides = perms.get("user_overrides", {})
+
+        effective_role = user_role.lower().strip() if user_role else "default"
+        if user_email and user_email.lower() in user_overrides:
+            override = user_overrides[user_email.lower()]
+            if isinstance(override, dict):
+                return override.get("denied_tools", [])
+            elif isinstance(override, str):
+                effective_role = override
+
+        role_cfg = roles_config.get(effective_role, roles_config.get("default", {}))
+        return role_cfg.get("denied_tools", [])
 
     # ------------------------------------------------------------------
     # HTTP Handlers
@@ -597,6 +731,8 @@ class APIServerAdapter(BasePlatformAdapter):
                 memory_dir=per_user_memory_dir,
                 org_memory_dir=org_memory_dir,
                 user_id=owui_user_id or None,
+                user_role=owui_user_role or None,
+                user_email=owui_user_email or None,
             ))
 
             return await self._write_sse_chat_completion(
@@ -614,6 +750,8 @@ class APIServerAdapter(BasePlatformAdapter):
                 memory_dir=per_user_memory_dir,
                 org_memory_dir=org_memory_dir,
                 user_id=owui_user_id or None,
+                user_role=owui_user_role or None,
+                user_email=owui_user_email or None,
             )
 
         idempotency_key = request.headers.get("Idempotency-Key")
@@ -897,6 +1035,8 @@ class APIServerAdapter(BasePlatformAdapter):
                 memory_dir=per_user_memory_dir_r,
                 org_memory_dir=org_memory_dir_r,
                 user_id=owui_user_id_r or None,
+                user_role=owui_user_role_r or None,
+                user_email=owui_user_email_r or None,
             )
 
         idempotency_key = request.headers.get("Idempotency-Key")
@@ -1309,6 +1449,8 @@ class APIServerAdapter(BasePlatformAdapter):
         memory_dir=None,
         org_memory_dir=None,
         user_id: Optional[str] = None,
+        user_role: Optional[str] = None,
+        user_email: Optional[str] = None,
     ) -> tuple:
         """
         Create an agent and run a conversation in a thread executor.
@@ -1332,6 +1474,8 @@ class APIServerAdapter(BasePlatformAdapter):
                 memory_dir=memory_dir,
                 org_memory_dir=org_memory_dir,
                 user_id=user_id,
+                user_role=user_role,
+                user_email=user_email,
             )
             if agent_ref is not None:
                 agent_ref[0] = agent
