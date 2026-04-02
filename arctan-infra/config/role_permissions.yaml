@@ -104,3 +104,25 @@ roles:
 
 # user_overrides:
 #   example@arctan.ai: admin
+
+# =============================================================================
+# Slack user ID → role mapping
+# =============================================================================
+# Maps Slack user IDs to roles. Same format as user_overrides:
+#
+#   U12345678: admin          # This Slack user gets admin tools
+#   U87654321: user           # This Slack user gets user-level tools
+#   U11111111:                # Inline custom config
+#     allowed_toolsets: [web, plane]
+#
+# Find Slack user IDs: click a person's profile → ⋯ → Copy member ID
+#
+# If a Slack user is NOT listed here, they get the full platform toolset
+# from config.yaml (no filtering). Add users to restrict their access.
+# =============================================================================
+
+slack_users:
+  U08SBU4CPB3: admin          # Update with actual Slack user IDs
+  # U_EXAMPLE_1: user
+  # U_EXAMPLE_2: user
+  # U_EXAMPLE_3: pending

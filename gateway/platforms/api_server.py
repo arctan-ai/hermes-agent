@@ -373,92 +373,18 @@ class APIServerAdapter(BasePlatformAdapter):
         )
 
     # ------------------------------------------------------------------
-    # Role-based tool permissions
+    # Role-based tool permissions (delegates to shared module)
     # ------------------------------------------------------------------
 
-    _role_permissions_cache: Optional[dict] = None
-    _role_permissions_mtime: float = 0.0
-
-    @classmethod
-    def _load_role_permissions(cls) -> dict:
-        """Load role_permissions.yaml with mtime-based caching (auto-reloads on change)."""
-        from hermes_constants import get_hermes_home
-        perms_path = get_hermes_home() / "role_permissions.yaml"
-        if not perms_path.exists():
-            cls._role_permissions_cache = None
-            return {}
-        try:
-            mtime = perms_path.stat().st_mtime
-            if cls._role_permissions_cache is not None and mtime == cls._role_permissions_mtime:
-                return cls._role_permissions_cache
-            import yaml
-            with open(perms_path) as f:
-                data = yaml.safe_load(f) or {}
-            cls._role_permissions_cache = data
-            cls._role_permissions_mtime = mtime
-            logger.info("Loaded role permissions from %s", perms_path)
-            return data
-        except Exception as e:
-            logger.warning("Failed to load role_permissions.yaml: %s", e)
-            return {}
-
-    @classmethod
-    def _resolve_role_toolsets(
-        cls,
-        platform_toolsets: list,
-        user_role: str = "",
-        user_email: str = "",
-    ) -> list:
-        """
-        Filter platform toolsets based on user role and email.
-
-        Returns the filtered list of enabled toolsets for this user.
-        If no role_permissions.yaml exists, returns platform_toolsets unchanged.
-        """
-        perms = cls._load_role_permissions()
-        if not perms:
-            return platform_toolsets
-
-        roles_config = perms.get("roles", {})
-        user_overrides = perms.get("user_overrides", {})
-
-        # Check for per-email override first
-        effective_role = user_role.lower().strip() if user_role else "default"
-        if user_email and user_email.lower() in user_overrides:
-            override = user_overrides[user_email.lower()]
-            if isinstance(override, str):
-                effective_role = override  # email maps to a role name
-            elif isinstance(override, dict):
-                # Direct toolset config for this email
-                role_cfg = override
-                return cls._apply_role_config(role_cfg, platform_toolsets)
-
-        # Look up role config (fall back to "default")
-        role_cfg = roles_config.get(effective_role, roles_config.get("default", {}))
-        return cls._apply_role_config(role_cfg, platform_toolsets)
+    @staticmethod
+    def _resolve_role_toolsets(platform_toolsets, user_role="", user_email=""):
+        from gateway.role_permissions import resolve_role_toolsets
+        return resolve_role_toolsets(platform_toolsets, user_role=user_role, user_email=user_email)
 
     @staticmethod
-    def _apply_role_config(role_cfg: dict, platform_toolsets: list) -> list:
-        """Apply a single role config dict to filter toolsets."""
-        if not role_cfg:
-            return platform_toolsets
-
-        allowed = role_cfg.get("allowed_toolsets", "all")
-        if allowed == "all":
-            result = list(platform_toolsets)
-        elif isinstance(allowed, list):
-            allowed_set = set(allowed)
-            result = [ts for ts in platform_toolsets if ts in allowed_set]
-        else:
-            result = list(platform_toolsets)
-
-        # Remove explicitly denied toolsets
-        denied_toolsets = role_cfg.get("denied_toolsets", [])
-        if denied_toolsets:
-            denied_set = set(denied_toolsets)
-            result = [ts for ts in result if ts not in denied_set]
-
-        return sorted(result) if result else result
+    def _apply_role_config(role_cfg, platform_toolsets):
+        from gateway.role_permissions import _apply_role_config
+        return _apply_role_config(role_cfg, platform_toolsets)
 
     # ------------------------------------------------------------------
     # Agent creation helper
@@ -540,23 +466,8 @@ class APIServerAdapter(BasePlatformAdapter):
 
     def _get_denied_tools(self, user_role: str, user_email: str) -> list:
         """Get the list of individually denied tool names for a user."""
-        perms = self._load_role_permissions()
-        if not perms:
-            return []
-
-        roles_config = perms.get("roles", {})
-        user_overrides = perms.get("user_overrides", {})
-
-        effective_role = user_role.lower().strip() if user_role else "default"
-        if user_email and user_email.lower() in user_overrides:
-            override = user_overrides[user_email.lower()]
-            if isinstance(override, dict):
-                return override.get("denied_tools", [])
-            elif isinstance(override, str):
-                effective_role = override
-
-        role_cfg = roles_config.get(effective_role, roles_config.get("default", {}))
-        return role_cfg.get("denied_tools", [])
+        from gateway.role_permissions import get_denied_tools
+        return get_denied_tools(user_role=user_role, user_email=user_email)
 
     # ------------------------------------------------------------------
     # HTTP Handlers

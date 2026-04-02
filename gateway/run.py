@@ -5344,6 +5344,25 @@ class GatewayRunner:
         from hermes_cli.tools_config import _get_platform_tools
         enabled_toolsets = sorted(_get_platform_tools(user_config, platform_key))
 
+        # Apply role-based tool filtering (Slack, Discord, etc.)
+        # Uses source.user_id to look up platform-specific role mappings
+        # in role_permissions.yaml (e.g. slack_users section).
+        try:
+            from gateway.role_permissions import resolve_role_toolsets, get_denied_tools
+            platform_name = source.platform.value if hasattr(source.platform, 'value') else str(source.platform)
+            enabled_toolsets = resolve_role_toolsets(
+                enabled_toolsets,
+                platform_user_id=source.user_id or "",
+                platform=platform_name,
+            )
+            _denied_tools = get_denied_tools(
+                platform_user_id=source.user_id or "",
+                platform=platform_name,
+            )
+        except Exception as _role_err:
+            logger.debug("Role permission filtering skipped: %s", _role_err)
+            _denied_tools = []
+
         # Apply tool preview length config (0 = no limit)
         try:
             from agent.display import set_tool_preview_max_len
@@ -5682,6 +5701,16 @@ class GatewayRunner:
                     session_db=self._session_db,
                     fallback_model=self._fallback_model,
                 )
+                # Apply per-tool deny list from role permissions
+                if _denied_tools and agent.tools:
+                    _denied_set = set(_denied_tools)
+                    _orig_count = len(agent.tools)
+                    agent.tools = [t for t in agent.tools if t["function"]["name"] not in _denied_set]
+                    agent.valid_tool_names -= _denied_set
+                    if len(agent.tools) < _orig_count:
+                        logger.info("Role filter (%s): removed %d denied tools for user %s",
+                                   platform_key, _orig_count - len(agent.tools), source.user_id)
+
                 if _cache_lock and _cache is not None:
                     with _cache_lock:
                         _cache[session_key] = (agent, _sig)
