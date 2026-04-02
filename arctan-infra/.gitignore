@@ -1,0 +1,10 @@
+# Secrets — never commit
+.env
+*.key
+*.pem
+*.secret
+.git-credentials
+
+# OS
+.DS_Store
+*.swp
