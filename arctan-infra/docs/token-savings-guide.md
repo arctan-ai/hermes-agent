@@ -687,28 +687,145 @@ EOF
 
 ---
 
-# Action Items
+# Checklists
 
-### This Week — Admin
-- [ ] Share this guide with the team
-- [ ] Assign repo owners in the [progress table](#repo-setup-progress) above
-- [ ] Verify Hermes is accessible to all team members
+Print these out or copy them into a Plane issue. Check things off as you go.
 
-### This Week — Repo Owners
-- [ ] Add `AGENTS.md` to your repo(s) using the templates above
-- [ ] Add `.github/copilot-instructions.md` if your repo has VS Code users
-- [ ] Commit and push
+---
 
-### This Week — Every Developer
-- [ ] Create your personal config file (see [Layer 3](#layer-3-developer), your tool)
-- [ ] **Zed users:** Set tabs to `"pinned"` — do this right now, biggest instant win
-- [ ] **VS Code users:** Enable Copilot Memory at github.com
-- [ ] **Claude Code users:** Create `~/.claude/CLAUDE.md` and start using `/memory`
-- [ ] **OpenCode users:** Add Haiku summarizer to config
+## Admin Checklist
 
-### Later — For Maximum Savings
-- [ ] Claude Code users: install claude-mem plugin
-- [ ] Add scoped `.github/instructions/*.md` to high-traffic repos
+Everything the admin needs to do, in order. Most of Layer 1 is already done — verify and fill the gaps.
+
+### Layer 1: Organization Setup
+
+- [ ] **Hermes accessible to all team members**
+  - Everyone can sign in at https://chat.getarctan.com with @arctan.ai
+  - Open WebUI roles assigned (admin / user) for each person
+  - @hermesbot responds in Slack
+
+- [ ] **Share guides with the team**
+  - Share this guide (token-savings-guide.md) in Slack or email
+  - Share the onboarding guide (onboarding-guide.md) for Hermes usage
+  - Pin both in a relevant Slack channel
+
+- [ ] **Assign AGENTS.md owners per repo**
+  Fill in the table below and share it. Each owner adds AGENTS.md using the templates in Layer 2.
+
+  | Repo | Owner | AGENTS.md Done? |
+  |------|-------|-----------------|
+  | arctan-client | __________ | ✅ already exists |
+  | arctan-client-app | __________ | ☐ |
+  | inference-server | __________ | ☐ |
+  | console-gateway | __________ | ☐ |
+  | auth-service | __________ | ☐ |
+  | db-service | __________ | ☐ |
+  | logging-service | __________ | ☐ |
+  | audio-driver | __________ | ☐ |
+  | livekit-gateway | __________ | ☐ |
+  | client-dashboard | __________ | ☐ |
+  | infra-service | __________ | ☐ |
+
+### Layer 2: Verify Repo Setup (after owners have pushed)
+
+- [ ] **All 11 repos have AGENTS.md**
+  ```bash
+  for repo in arctan-client arctan-client-app inference-server console-gateway \
+    auth-service db-service livekit-gateway logging-service audio-driver \
+    client-dashboard infra-service; do
+    echo -n "$repo: "
+    gh api repos/arctan-ai/$repo/contents/AGENTS.md --jq '.name' 2>/dev/null || echo "MISSING"
+  done
+  ```
+
+- [ ] **Repos with VS Code users have .github/copilot-instructions.md**
+  Priority repos: arctan-client, inference-server, console-gateway
+
+- [ ] **Repos with Zed users have .zed/rules.md**
+  Ask the team who uses Zed on which repos
+
+### Layer 3: Verify Developer Setup
+
+- [ ] **Remind the team to do their personal setup**
+  Send a Slack message linking to [Layer 3](#layer-3-developer) in this guide
+  
+- [ ] **Follow up after 1 week**
+  Ask in standup: "Has everyone set up their AI context files?"
+  Common blocker: people forget to do it. One reminder usually works.
+
+### Ongoing
+
+- [ ] **Track API spend monthly**
+  Compare Claude API costs before/after this rollout.
+  OpenRouter dashboard shows per-key usage.
+
+- [ ] **Update AGENTS.md when repos change significantly**
+  Add to PR review culture: "Does this change need an AGENTS.md update?"
+
+---
+
+## Team Member Checklist
+
+Everything you need to do as a developer. Takes ~15 minutes total.
+
+### Step 1: Get Into Hermes (2 minutes)
+
+- [ ] Sign in at **https://chat.getarctan.com** with your @arctan.ai Google account
+- [ ] Select **hermes-agent** model from dropdown
+- [ ] Send your first message: "Hi, I'm [name], I work on [repos/area]"
+- [ ] Hermes remembers you from now on
+
+### Step 2: Set Up Your Tool (10 minutes)
+
+**Pick your tool and check off the steps:**
+
+#### If you use VS Code + Copilot:
+- [ ] Go to github.com → Settings → Copilot → Features → turn on **Memory**
+- [ ] In VS Code settings, enable: `github.copilot.chat.codeGeneration.useInstructionFiles: true`
+- [ ] Tell Copilot about yourself in a chat: "I work on [repos], I prefer [style]"
+
+#### If you use Claude Code (iTerm2):
+- [ ] Create `~/.claude/CLAUDE.md` using the template in [Section 3.2](#32-claude-code-iterm2)
+- [ ] Edit the "About Me" line with your actual role and repos
+- [ ] Start ending work sessions with `/memory` (takes 2 seconds)
+- [ ] Optional: install claude-mem plugin for automatic memory
+
+#### If you use OpenCode (Ghostty):
+- [ ] Create `~/.config/opencode/context.md` using the template in [Section 3.3](#33-opencode-ghostty)
+- [ ] Edit the "About Me" line with your actual role and repos
+- [ ] Add cheap Haiku summarizer to `~/.config/opencode/config.toml` (see [Section 3.3](#33-opencode-ghostty))
+
+#### If you use Zed:
+- [ ] Open Zed settings (`Cmd+,`) → set `"assistant.context.tabs"` to `"pinned"` — **do this first, biggest win**
+- [ ] Create `~/.config/zed/rules.md` using the template in [Section 3.4](#34-zed-editor)
+
+### Step 3: Add AGENTS.md to Your Repos (5 minutes per repo)
+
+If you own a repo that doesn't have `AGENTS.md` yet:
+- [ ] Copy the template for your repo from [Layer 2](#layer-2-repository) above
+- [ ] Paste as `AGENTS.md` in the repo root
+- [ ] Customize any details specific to your repo's current state
+- [ ] `git add AGENTS.md && git commit -m "docs: add AGENTS.md" && git push`
+- [ ] Optionally add `.github/copilot-instructions.md` and `.zed/rules.md`
+
+### Step 4: Build Habits (ongoing)
+
+- [ ] **End of day:** If you had a significant Claude Code session, run `/memory`
+- [ ] **Starting a session:** Notice if Claude already knows your project — that means the context files are working
+- [ ] **New topic:** Start a new chat/thread instead of continuing a long one
+- [ ] **Quick question:** Use the cheap model (Haiku) or ask Hermes instead of burning API tokens
+
+### Verify It's Working
+
+After setup, start a new session on a project that has AGENTS.md. Claude should:
+- Know what the project is without you explaining
+- Know your coding style from your personal config
+- NOT spend the first 5 minutes reading random files
+
+If Claude still seems lost, check:
+1. Is AGENTS.md in the repo root? (`ls AGENTS.md`)
+2. Did you create your personal config file? (check the path for your tool)
+3. For Claude Code: did you run `/memory` in a previous session?
 
 ---
 
