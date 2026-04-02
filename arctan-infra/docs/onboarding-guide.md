@@ -1,478 +1,555 @@
-# Arctan AI Assistant — Team Onboarding Guide
+# 🎧 Arctan AI Workflow Guide
 
-> Your team now has access to a shared AI assistant that knows your codebase, can query your databases, manage project issues, and help with research — all through a simple chat interface.
+> We've connected an AI assistant to our Plane boards, analytics database, AWS infrastructure, and all 12 repos. Here's how to use it — and how to stop wasting money on your individual Claude sessions.
 
 ---
 
 ## Table of Contents
 
-1. [What Is This?](#1-what-is-this)
-2. [Getting Started (2 minutes)](#2-getting-started)
-3. [What Can You Do With It?](#3-what-can-you-do-with-it)
-4. [Real Examples By Role](#4-real-examples-by-role)
-5. [Access Levels](#5-access-levels)
-6. [Tips for Getting Better Results](#6-tips-for-getting-better-results)
-7. [What It Knows About Arctan](#7-what-it-knows-about-arctan)
-8. [Slack Integration](#8-slack-integration)
-9. [Privacy & Memory](#9-privacy--memory)
-10. [Frequently Asked Questions](#10-frequently-asked-questions)
-11. [Cost Analysis: Shared vs Individual AI Agents](#11-cost-analysis-shared-vs-individual-ai-agents)
+**Part 1: The Shared AI Assistant (Hermes)**
+1. [What We Built](#1-what-we-built)
+2. [Get In (2 minutes)](#2-get-in)
+3. [Day-to-Day Usage: What To Ask It](#3-day-to-day-usage)
+4. [Arctan-Specific Examples](#4-arctan-specific-examples)
+5. [What It Knows About Our Stack](#5-what-it-knows-about-our-stack)
+6. [Using It From Slack](#6-using-it-from-slack)
+7. [Access Levels & Permissions](#7-access-levels--permissions)
+
+**Part 2: Your Individual AI Tools**
+8. [How Hermes Fits With Your Coding Tools](#8-how-hermes-fits-with-your-coding-tools)
+9. [Stop Wasting Tokens: Per-Tool Setup](#9-stop-wasting-tokens)
+10. [The Shared Context File: AGENTS.md](#10-the-shared-context-file)
+
+**Part 3: Reference**
+11. [Tips for Better Results](#11-tips-for-better-results)
+12. [Privacy, Memory & Data](#12-privacy-memory--data)
+13. [Cost Breakdown](#13-cost-breakdown)
+14. [FAQ](#14-faq)
 
 ---
 
-## 1. What Is This?
+# Part 1: The Shared AI Assistant
 
-We've set up **Hermes** — an AI agent that goes beyond a simple chatbot. Unlike ChatGPT or a basic Claude subscription, Hermes can:
+## 1. What We Built
 
-- **Take actions**: query databases, search the web, browse websites, look up project issues
-- **Remember context**: it remembers your preferences and past conversations across sessions
-- **Access our tools**: it's connected to Plane (project management), ClickHouse (analytics database), and AWS (infrastructure)
-- **Know our codebase**: it has documentation for all 12 Arctan repositories built into its knowledge base
+We deployed an AI assistant called **Hermes** that every Arctan team member can use through a web chat or Slack. Unlike ChatGPT or a personal Claude subscription, this assistant is wired into our actual systems:
 
-Think of it as a team member that has read all our docs, has access to our project tracker and analytics, and is available 24/7.
+| System | What the AI can do |
+|--------|-------------------|
+| **Plane** (all 6 projects) | Query issues, create new issues, update status, add comments |
+| **ClickHouse** (88M+ metrics) | Run SQL queries on user activity, call data, performance metrics |
+| **AWS** (production-cluster) | Check ECS services, EC2 instances, security groups (read-only) |
+| **All 12 repos** | Answer questions about architecture, conventions, known bugs |
+| **Web** | Search, browse sites, read documentation, summarize articles |
 
-**It is NOT:**
-- A replacement for your IDE or coding tools
-- An autonomous agent that will deploy code or modify production systems
-- A place to share confidential customer data outside of what's already in our systems
+It also has **persistent memory** — it remembers who you are, what you work on, and your preferences across sessions. Each person's memory is private and isolated.
 
----
-
-## 2. Getting Started
-
-### Step 1: Open the Chat Interface
-
-Go to: **https://chat.getarctan.com**
-
-### Step 2: Sign In with Google
-
-Click **"Sign in with Google"** and use your **@arctan.ai** Google account. Only arctan.ai emails are allowed — no personal Gmail accounts.
-
-### Step 3: Start Chatting
-
-That's it. You'll see a chat interface similar to ChatGPT. Select the **hermes-agent** model from the model dropdown (it should be the only one), and start typing.
-
-Your first message could be something like:
-> "Hi! I'm [your name], I work on [your area]. What can you help me with?"
-
-The AI will introduce its capabilities and remember who you are for future sessions.
+**Think of it this way:**
+- ChatGPT knows the internet but nothing about Arctan
+- Your local Claude Code knows the files open in your terminal but nothing about our Plane boards or analytics
+- **Hermes knows Arctan** — the codebase, the data, the projects, and you
 
 ---
 
-## 3. What Can You Do With It?
+## 2. Get In
 
-### 🔍 Research & Web Search
-- "Search for the latest papers on real-time voice conversion"
-- "What are the best practices for WebRTC audio optimization?"
-- "Compare LiveKit vs Janus for our use case"
-- "Summarize this article: [paste URL]"
+### Step 1: Go to [chat.getarctan.com](https://chat.getarctan.com)
 
-### 📊 Analytics & Data Queries
-- "How many active users did we have this week?"
-- "Show me call volume trends for the last 30 days"
-- "What's the average model latency by organization?"
-- "Which organizations have the most users?"
-- "Show me user growth month-over-month"
+### Step 2: Click "Sign in with Google"
+Use your **@arctan.ai** account. Personal Gmail won't work.
 
-The AI writes and runs SQL queries against our ClickHouse analytics database (88 million+ metrics rows, 27 million+ user activity events).
+### Step 3: Pick the model
+Select **hermes-agent** from the dropdown at the top. It should be the only model available.
 
-### ✈️ Project Management (Plane)
-- "What are the urgent issues in the Engineering project?"
-- "Show me all open issues assigned to me in Data Science"
-- "Create a new issue in Engineering: 'Fix audio crackling on Windows 11' with high priority"
-- "Update issue ENGINEERIN-42 to mark it as completed"
-- "Add a comment to ARCTA-15 saying we need to discuss this in standup"
+### Step 4: Say hello
+Type something like:
 
-### ☁️ Infrastructure Queries (AWS)
-- "List all ECS services running in production"
-- "Show me the EC2 instances in ap-south-1"
-- "What's the status of the clickhouse ECS task?"
-- "Describe the security groups in our VPC"
+> "Hey, I'm [your name]. I work on [your team/project]. What can you help me with?"
 
-(Read-only — the AI cannot modify infrastructure.)
+The AI will introduce itself and remember you. From now on, it knows your name and context.
 
-### 📖 Codebase Knowledge
-- "Explain the audio pipeline architecture in arctan-client"
-- "What does the inference-server do?"
-- "How is data synced from Postgres to ClickHouse?"
-- "What's the structure of the console-gateway project?"
-- "What are the known caveats with the audio driver?"
-
-### 🌐 Web Browsing & Research
-- "Browse the ClickHouse documentation and find how to optimize ReplacingMergeTree queries"
-- "Go to our competitor's website and summarize their product features"
-- "Find the npm package for WebRTC audio processing and check its API"
-
-### 📝 General Assistance
-- "Draft an email to the client about the new feature release"
-- "Help me write a technical spec for the delta update feature"
-- "Translate this error message from Japanese"
-- "Create a summary of this meeting transcript: [paste text]"
+**That's it. You're in.**
 
 ---
 
-## 4. Real Examples By Role
+## 3. Day-to-Day Usage
 
-### For Engineers
+Here's what you'll actually use this for on a typical day at Arctan:
+
+### 🔎 "What's going on?"
+> "Show me all urgent and high-priority issues in the Engineering project"
+
+> "How many calls did our users make yesterday?"
+
+> "What's the status of the ClickHouse ECS service?"
+
+### ✏️ "I need to update something"
+> "Create a new issue in Engineering: 'Investigate Realtek driver compatibility on Windows 11' with high priority, assign it to me"
+
+> "Add a comment to ENGINEERIN-23 saying 'Tested on Build 22631, crackling still present at 48kHz'"
+
+> "Move DATASCIENC-7 to completed"
+
+### 📊 "I need data"
+> "Show me daily active users for the last 30 days, grouped by organization"
+
+> "What's the average model latency for ICCS users this week? Compare it to last week"
+
+> "How many users have packet loss above 5%? Which organizations are they from?"
+
+> "Show me signup growth month over month for the last 6 months"
+
+### 🤔 "How does this work?"
+> "Explain the audio pipeline in arctan-client. I need to understand the flow from cpal input to Beatrice output"
+
+> "What are the known caveats with the audio driver? I'm about to start testing on a new build"
+
+> "How does PeerDB sync data from Postgres to ClickHouse? I'm seeing a delay in the analytics"
+
+> "What's the structure of the console-gateway project? I need to add a new API endpoint"
+
+### 🔬 "I need research"
+> "Search for the latest WebRTC audio processing libraries for noise cancellation. Compare alternatives to DeepFilterNet"
+
+> "Go to the ClickHouse docs and find how to optimize queries on ReplacingMergeTree tables — we have duplicates in the metrics table"
+
+> "Find the LiveKit SDK docs for Go and summarize the room management API"
+
+### 📝 "I need content"
+> "Draft a release notes email for the v2.1 desktop client update. The key changes are: AGC improvement, new Beatrice model support, and the ring buffer fix"
+
+> "Write a tech spec outline for adding delta updates to the client app"
+
+> "Summarize this meeting transcript and create Plane issues for each action item: [paste text]"
+
+---
+
+## 4. Arctan-Specific Examples
+
+These are real queries you can run right now using actual Arctan data:
+
+### Engineering Team
+
 ```
-You: "Show me all high-priority bugs in the Engineering project"
+You: "What issues are open in Engineering with urgent or high priority?"
 
-AI: [Uses plane_query tool]
-    Found 5 high-priority issues:
-    1. ENGINEERIN-23: Refactoring the gender detection logic
-    2. ENGINEERIN-31: Audio crackling on specific Realtek drivers
+Hermes: Found 8 issues:
+  [urgent] ENGINEERIN-12: Automatic Gain Control
+  [urgent] ENGINEERIN-14: Record After Gain
+  [high]   ENGINEERIN-23: Refactoring the gender detection logic
+  [high]   ENGINEERIN-27: Delta Update feature
+  ...
+```
+
+```
+You: "What's the average model latency for the last 24 hours, 
+      broken down by the top 5 users?"
+
+Hermes: [Runs SQL on ClickHouse]
+  ┌─user_name───────┬─avg_latency─┬─samples──┐
+  │ user_alpha       │      18.4ms │   12,450 │
+  │ user_beta        │      14.2ms │    8,321 │
+  │ user_gamma       │      12.7ms │   15,672 │
+  │ user_delta       │      11.9ms │    9,543 │
+  │ user_epsilon     │      10.1ms │   11,234 │
+  └──────────────────┴─────────────┴──────────┘
+```
+
+### Data Science Team
+
+```
+You: "How many distinct users made calls each day this week?"
+
+Hermes: [Runs SQL on ClickHouse]
+  Mon: 142 users (2,341 calls)
+  Tue: 156 users (2,567 calls)
+  Wed: 148 users (2,412 calls)
+  Thu: 161 users (2,689 calls)
+  Fri: 139 users (2,198 calls)
+  Total unique: 203 users, 12,207 calls
+```
+
+```
+You: "Show me the distribution of activity types this month"
+
+Hermes: [Runs SQL]
+  generic_activity:    2,145,000  (94.2%)
+  call_started:           62,400  (2.7%)
+  call_ended:             61,200  (2.7%)
+  APPLICATION_CLOSED:      4,100  (0.2%)
+  login:                     380  (0.02%)
+  ...
+```
+
+### Business / Product Team
+
+```
+You: "How many organizations do we have, and what's the user 
+      distribution across the top 10?"
+
+Hermes: [Queries ClickHouse]
+  42 organizations total, 538 users.
+  Top 10:
+    ICCS:           146 users (27.1%)
+    MegaaOpes:       78 users (14.5%)
+    Grassroots:      52 users (9.7%)
+    Goalcryst:       41 users (7.6%)
+    Value Logistics:  38 users (7.1%)
+    Arctan.ai:       23 users (4.3%)
     ...
-
-You: "What's the average model latency over the past 24 hours?"
-
-AI: [Uses clickhouse_query tool]
-    Average model latency: 12.3ms
-    95th percentile: 28.7ms
-    Max: 142ms (user: john@client.com at 14:23)
-    ...
 ```
 
-### For Data Science
 ```
-You: "Show me a breakdown of activity types for the last week"
+You: "Create an issue in Customer Onboarding: 'Prepare onboarding 
+      deck for ValueLogistics pilot' with medium priority, due April 15"
 
-AI: [Runs SQL query on ClickHouse]
-    call_started:    12,450
-    call_ended:      12,389
-    login:           892
-    streaming_started: 234
-    ...
-
-You: "Which users have the highest packet loss?"
-
-AI: [Runs SQL query]
-    Top 5 by avg packet loss:
-    1. user_42 (org: MegaaOpes) — avg 3.2% loss
-    ...
+Hermes: Created CUSTOMERON-19
+  Title: Prepare onboarding deck for ValueLogistics pilot
+  Priority: Medium
+  Due: 2026-04-15
+  URL: https://app.plane.so/arctan/...
 ```
 
-### For Business / Product
+### Infrastructure / DevOps
+
 ```
-You: "How many new users signed up this month vs last month?"
+You: "What ECS services are running in production? Show task status"
 
-AI: [Queries ClickHouse]
-    This month: 47 new users
-    Last month: 38 new users
-    Growth: +23.7%
-
-You: "Create a Plane issue for Customer Onboarding: 
-      'Prepare demo for Acme Corp' with medium priority, 
-      due date April 15"
-
-AI: [Uses plane_update tool]
-    Created: CUSTOMERON-18 "Prepare demo for Acme Corp"
-    Priority: Medium | Due: April 15, 2026
+Hermes: [Queries AWS]
+  production-cluster:
+    production-clickhouse:  1/1 running (FARGATE, 2 vCPU, 4GB)
+    production-peerdb:      1/1 running (FARGATE)
 ```
 
-### For Everyone
 ```
-You: "I keep getting a CORS error in the console-gateway. 
-      What does the documentation say about CORS configuration?"
+You: "What's the private IP of the ClickHouse container?"
 
-AI: [Reads from its knowledge base]
-    The console-gateway handles CORS in server/internal/middleware/.
-    The HTTP_HTTPS_CONFIG.md doc explains that when running behind
-    nginx, you should set USE_HTTPS=false and let nginx handle SSL
-    termination. CORS headers are configured in...
+Hermes: [Queries AWS ECS]
+  Task: a26ff891...
+  Private IP: 172.31.13.161
+  AZ: ap-south-1b
+  Status: RUNNING
 ```
 
 ---
 
-## 5. Access Levels
+## 5. What It Knows About Our Stack
 
-Your access depends on your Open WebUI role (set by an admin):
+Hermes has indexed documentation from every Arctan repo. You don't need to tell it what our product is — it already knows.
 
-| Capability | Admin | Team Member | Pending |
-|-----------|-------|-------------|---------|
-| Web search & browsing | ✅ | ✅ | ✅ |
-| View codebase knowledge | ✅ | ✅ | ✅ |
+### Architecture Knowledge
+
+```
+Client Layer
+├── arctan-client          Tauri v2 desktop app (Rust + React)
+│                          Audio: cpal → DeepFilterNet → Beatrice → cpal
+├── arctan-client-app      Unified web + desktop (TypeScript)
+└── client-dashboard       Admin panel (React + FastAPI)
+
+Gateway Layer
+├── console-gateway        API gateway (Go) + React console, Google OAuth
+└── livekit-gateway        WebRTC media server (Go + LiveKit)
+
+Service Layer
+├── auth-service           User auth + config (Flask + PostgreSQL)
+├── db-service             DB lifecycle + migrations (Alembic)
+├── inference-server       Voice changer ML models (Python, CUDA/DML)
+└── logging-service        Metrics → ClickHouse (Python)
+
+Infrastructure
+├── audio-driver           Windows WDM virtual audio driver (C++)
+├── infra-service          Docker configs: ClickHouse, Grafana, PeerDB, nginx
+└── hermes-agent           This AI system (Python)
+```
+
+### Detailed Reference Docs Loaded
+- **Audio pipeline analysis** — crackling root causes, ring buffer optimizations
+- **Audio driver caveats** — Code 10 errors, buffer sizing, HLK testing
+- **PeerDB CDC setup** — how Postgres data flows to ClickHouse
+- **AGENTS.md** — coding standards for arctan-client
+
+### Database Schema (ClickHouse)
+
+| Table | Rows | What's In It |
+|-------|------|-------------|
+| `metrics` | 88M+ | model_latency, ping, cpu, ram, volume, packets, jitter, webrtc_stats |
+| `user_activities` | 27M+ | activity_type (call_started, call_ended, login, etc), timestamps |
+| `Users` | 538 | name, email, organization_id, license_type |
+| `Organizations` | 42 | name, created_at |
+| `internal_metrics` | 3M+ | JSON metric blobs |
+
+### Plane Projects
+
+| Project | Identifier | Use For |
+|---------|-----------|---------|
+| Engineering | ENGINEERIN | Core product development |
+| Data Science | DATASCIENC | ML models, data pipeline |
+| Customer Issues & Tracks | CUSTOMERIS | Client-reported issues |
+| Customer Onboarding | CUSTOMERON | New client onboarding tasks |
+| ARCTAN | ARCTA | General company tasks |
+| Business | BUSINESS | Business development |
+
+---
+
+## 6. Using It From Slack
+
+Hermes is also **@hermesbot** in Slack.
+
+**DM it** for private questions:
+> @hermesbot How many active users this week?
+
+**Mention it in a channel** for team-visible answers:
+> @hermesbot What are the urgent issues in Engineering?
+
+**Use threads** for follow-ups — it keeps context within the thread.
+
+Same capabilities, same access level. Use whichever is faster — the browser chat or Slack.
+
+---
+
+## 7. Access Levels & Permissions
+
+Your access is set by an admin based on your Open WebUI role:
+
+| What you can do | Admin | Team Member | New Signup |
+|----------------|-------|-------------|------------|
+| Search the web, browse sites | ✅ | ✅ | ✅ |
+| Ask about our codebase | ✅ | ✅ | ✅ |
 | Query Plane issues | ✅ | ✅ | ✅ |
 | Create/update Plane issues | ✅ | ✅ | ❌ |
-| Query analytics (ClickHouse) | ✅ | ✅ | ❌ |
+| Query ClickHouse analytics | ✅ | ✅ | ❌ |
 | Query AWS infrastructure | ✅ | ✅ | ❌ |
-| Browse files on server | ✅ | ✅ | ❌ |
-| Personal memory (remembers you) | ✅ | ✅ | ❌ |
-| Run terminal commands | ✅ | ❌ | ❌ |
-| Write/edit files | ✅ | ❌ | ❌ |
-| Create cron jobs (scheduled tasks) | ✅ | ❌ | ❌ |
-| Manage skills (modify AI knowledge) | ✅ | ❌ | ❌ |
+| Personal memory | ✅ | ✅ | ❌ |
+| Run shell commands on server | ✅ | ❌ | ❌ |
+| Write/edit files on server | ✅ | ❌ | ❌ |
+| Create scheduled tasks | ✅ | ❌ | ❌ |
 
-**Most team members will be "Team Member" (user role)** — this gives you full access to all integrations without being able to modify the server or run arbitrary code.
+**You'll be added as "Team Member"** — full access to all integrations, no ability to modify the server.
 
-If you need elevated access, ask an admin to upgrade your role.
+Need more access? Ask an admin.
 
 ---
 
-## 6. Tips for Getting Better Results
+# Part 2: Your Individual AI Tools
 
-### Be Specific
-```
-❌ "Show me the data"
-✅ "Show me daily active users for the last 30 days, broken down by organization"
-```
+## 8. How Hermes Fits With Your Coding Tools
 
-### Give Context
-```
-❌ "Fix the bug"
-✅ "I'm working on ENGINEERIN-23, the gender detection refactor. 
-    The current logic in inference-server uses a threshold of 0.5. 
-    Help me understand the tradeoffs of changing it to 0.7"
-```
+You already use AI for coding. Here's how Hermes complements — not replaces — that:
 
-### Ask Follow-up Questions
-The AI remembers the conversation. You can say:
-- "Now filter that to just the top 5"
-- "Show me the same thing but for last month"
-- "Export that as a CSV format"
+| Task | Use Hermes | Use Your Coding Tool |
+|------|-----------|---------------------|
+| "How many active users this week?" | ✅ queries ClickHouse | ❌ can't access our DB |
+| "Create an issue in Plane" | ✅ creates it directly | ❌ you'd do it manually |
+| "How does the auth-service work?" | ✅ knows all 12 repos | ⚠️ only knows open files |
+| "Refactor this Rust function" | ❌ can't edit your files | ✅ edits in your IDE |
+| "Debug this stack trace" | ❌ can't run your code | ✅ runs locally |
+| "Find a WebRTC library" | ✅ searches + browses web | ⚠️ limited in most tools |
+| "Quick question from my phone" | ✅ web + Slack | ❌ need your laptop |
 
-### Use Multi-Step Tasks
-```
-"First, check how many calls had packet loss > 5% last week.
- Then look up which organizations those users belong to.
- Finally, create a Plane issue in Customer Issues with a summary."
-```
-
-### Teach It About Yourself
-The AI has persistent memory per user. Tell it:
-- "I work on the audio driver team"
-- "I prefer concise answers with code examples"
-- "My timezone is IST"
-
-It will remember these across sessions.
+**Rule of thumb:**
+- **Hermes** = organization-level questions, data, project management, research
+- **Your tool** = hands-on coding, debugging, refactoring
 
 ---
 
-## 7. What It Knows About Arctan
+## 9. Stop Wasting Tokens
 
-The AI has built-in knowledge about our entire stack:
+Every time you start a new session in Claude Code, OpenCode, Zed, or VS Code, Claude rebuilds context from scratch. That's ~50,000 tokens wasted per session just getting oriented.
 
-### Repositories It Knows
-| Repo | What It Knows |
-|------|--------------|
-| arctan-client | Tauri desktop app, audio pipeline, Rust + React architecture |
-| arctan-client-app | Unified web + desktop client |
-| audio-driver | Windows WDM driver, build process, known caveats |
-| inference-server | Voice changer ML models, LiveKit integration |
-| livekit-gateway | WebRTC media server, Go implementation |
-| console-gateway | API gateway, Google OAuth, React console |
-| auth-service | Flask auth, user registration, config management |
-| db-service | Database migrations, Alembic, PostgreSQL |
-| logging-service | Metrics collection, schema strategy |
-| client-dashboard | React + FastAPI admin panel |
-| infra-service | ClickHouse, Grafana, PeerDB, nginx configs |
-| hermes-agent | This AI system itself |
+**The fix takes 5-10 minutes and saves $50-160/person/month.**
 
-### Databases It Can Query
-- **ClickHouse Analytics**: 88M+ performance metrics, 27M+ user activities, 538 users, 42 organizations
-- **Plane**: 6 projects (Engineering, Data Science, Customer Issues, Customer Onboarding, ARCTAN, Business)
+We have a detailed per-tool guide:
 
-### It Also Knows
-- Audio pipeline internals (crackling root causes, ring buffer optimizations)
-- PeerDB CDC setup (how data flows from Postgres to ClickHouse)
-- Infrastructure topology (ECS services, security groups, networking)
-- Build and deployment processes for each repo
+👉 **[Token Savings Guide](claude-mem-setup-guide.md)**
 
----
+Quick summary of what to do for each tool:
 
-## 8. Slack Integration
+### VS Code + Copilot
+1. Enable **Copilot Memory** in GitHub Settings → Copilot → Features
+2. Create `.github/copilot-instructions.md` in each repo with project context
+3. Set tab context to "pinned" or "none" to avoid sending all open files
 
-The AI is also available in Slack as **@hermesbot**. You can:
+### Claude Code (iTerm2)
+1. Create `~/.claude/CLAUDE.md` with your global preferences
+2. Run `/memory` at the end of each session (2 seconds, saves thousands of tokens next time)
+3. Optional: install **claude-mem** plugin for fully automatic memory
 
-- DM @hermesbot directly for private conversations
-- Mention @hermesbot in a channel for team-visible queries
-- Use it in threads for contextual follow-ups
+### OpenCode (Ghostty)
+1. Create `~/.config/opencode/context.md` with your global preferences
+2. Add a cheap summarizer model (Haiku) to your config for context compression
+3. Use `/compact` to shrink long conversations
 
-Slack conversations have the same tool access as your Open WebUI role.
+### Zed
+1. Create `~/.config/zed/rules.md` with your global preferences
+2. Change tab context to `"pinned"` in settings (stop sending all open tabs)
+3. Use `@thread` to reference previous conversations instead of re-explaining
 
 ---
 
-## 9. Privacy & Memory
+## 10. The Shared Context File
 
-### What's Private
-- **Your conversations are private.** Other team members cannot see your chat history.
-- **Your memory is isolated.** What the AI remembers about you is stored separately from other users.
-- **Chat history stays on our server.** Nothing is sent to third parties except the LLM API calls.
+**This is the single highest-impact thing the team can do together.**
 
-### What's Shared
-- **Org memory**: There's a shared knowledge base that all users can see (company info, team roster, infrastructure details). Only admins can edit this.
-- **Skills/knowledge**: Everyone sees the same codebase knowledge and tool capabilities.
-- **LLM API calls**: Your messages are sent to the AI model provider (via OpenRouter → Anthropic) for processing. These providers have data processing agreements and don't use your data for training.
+`AGENTS.md` is a file in the root of a repo that every AI tool reads automatically — Claude Code, OpenCode, Zed, and Copilot all support it. It tells the AI about the project's architecture, conventions, and gotchas.
 
-### Data Retention
-- Chat sessions are stored on our EC2 server in ap-south-1
-- The AI's memory about you persists across sessions until you ask it to forget
-- You can say "forget everything you know about me" to wipe your personal memory
+**arctan-client already has one.** If your repo doesn't, create one:
 
----
+```markdown
+# AGENTS.md
 
-## 10. Frequently Asked Questions
+## Project Overview
+[What this service does in 2-3 sentences]
 
-**Q: Is this ChatGPT?**
-No. This is Hermes Agent running Claude (by Anthropic) as the underlying model. Unlike ChatGPT, it can take actions — run queries, browse the web, manage Plane issues. It's also connected to our internal systems.
+## Tech Stack
+[Language, framework, key libraries]
 
-**Q: Can it write code for me?**
-Yes, it can help write, review, and explain code. However, for hands-on coding, use your local tools (VS Code + Copilot, Claude Code, OpenCode, or Zed) — they have direct access to your files and can run code. Use Hermes for code review, explaining unfamiliar code, generating boilerplate, and architectural questions.
+## Structure
+[Key directories and what they contain]
 
-**Q: Can it access my local files?**
-No. It runs on our server, not on your computer. It can only access files on the server and query our connected systems (Plane, ClickHouse, AWS).
+## Conventions
+[Naming, error handling, patterns]
 
-**Q: Is it safe to paste sensitive code?**
-The messages go through OpenRouter to Anthropic for processing. Use the same judgment as you would with any cloud-based AI tool. Don't paste customer PII, API keys, or passwords.
+## Build & Run
+[How to build, test, run locally]
 
-**Q: Can I use it for personal tasks?**
-It's set up for work purposes, but occasional personal use (writing an email, quick research) is fine. Don't use it for anything that would be inappropriate at work.
+## Known Gotchas
+[Things that trip people up]
+```
 
-**Q: How do I report issues?**
-Message an admin, or create a Plane issue in the ARCTAN project. You can even ask the AI: "Create a Plane issue for a bug I found in the AI assistant".
+Commit it to git. Everyone who pulls gets it. Every AI tool reads it automatically.
 
-**Q: Does it make mistakes?**
-Yes. AI can hallucinate (make things up). Always verify critical information, especially:
-- SQL query results (check the query logic)
-- Code suggestions (test before using)
-- Factual claims (cross-reference)
-
-**Q: What model is it running?**
-Claude Opus 4.6 by Anthropic, routed through OpenRouter. This is the same model available on claude.ai, but with tool-calling capabilities and our custom integrations.
-
-**Q: Can I use it on mobile?**
-Yes. The web interface at https://chat.getarctan.com works on mobile browsers. The Slack integration also works on the Slack mobile app.
+**Token impact:** One 500-token file replaces 10,000-50,000 tokens of Claude re-discovering your project structure by reading random files. That's a **95% reduction** in context setup cost.
 
 ---
 
-## 11. Cost Analysis: Shared vs Individual AI Agents
+# Part 3: Reference
 
-### The Question
-*Would it be cheaper for each team member to run their own Claude API subscription (via VS Code extensions, local agents, etc.) instead of this shared setup?*
+## 11. Tips for Better Results
 
-### Current Shared Setup Cost
+### Be specific
+```
+❌  "Show me the data"
+✅  "Show me daily active users for the last 30 days, grouped by organization, 
+     sorted by user count descending"
+```
+
+### Give Arctan context
+```
+❌  "Fix the bug"
+✅  "I'm working on ENGINEERIN-23, the gender detection refactor in inference-server. 
+     The threshold is currently 0.5. What are the tradeoffs of changing it to 0.7?"
+```
+
+### Chain tasks together
+```
+"Check how many calls had packet loss > 5% last week. 
+ Find which organizations those users belong to. 
+ Create a Plane issue in Customer Issues summarizing the problem."
+```
+
+### Teach it about you
+Tell it things once — it remembers forever:
+- "I work on the audio driver and inference server"
+- "I prefer short answers with code examples"
+- "When I ask about metrics, default to the last 7 days"
+
+### Follow up naturally
+It remembers the conversation:
+- "Now show just the top 5"
+- "Filter that to only ICCS users"
+- "Plot that as a markdown table"
+
+---
+
+## 12. Privacy, Memory & Data
+
+**Your conversations are private.** No one else can see your chat history or what the AI remembers about you.
+
+**Your memory is isolated.** What it learns about your preferences is stored separately per user on our EC2 server in ap-south-1.
+
+**LLM calls go through OpenRouter → Anthropic.** They don't use your data for training. Use the same judgment as with any cloud AI tool — don't paste customer PII, API keys, or passwords.
+
+**Shared knowledge is read-only.** There's an org-wide knowledge base (company info, codebase architecture) that everyone can access but only admins can edit.
+
+**You can reset your memory** anytime: just say "forget everything you know about me."
+
+---
+
+## 13. Cost Breakdown
+
+### Shared Hermes Setup
 
 | Component | Monthly Cost |
 |-----------|-------------|
-| EC2 t3.large (ap-south-1) | ~$60/mo |
-| OpenRouter API (Claude Opus 4.6) | Variable (usage-based) |
-| Domain + SSL | Free (Let's Encrypt via Caddy) |
-| Open WebUI | Free (open source) |
-| Hermes Agent | Free (open source) |
-| **Infrastructure total** | **~$60/mo fixed** |
+| EC2 t3.large (ap-south-1) | ~$60 |
+| Claude API via OpenRouter | ~$240-480 (usage-based, 12 people) |
+| Open WebUI + Caddy + Hermes | Free (open source) |
+| **Total** | **~$300-540/mo (~$25-45/person)** |
 
-#### API Token Costs (OpenRouter → Claude)
-Claude Opus 4.6 via OpenRouter:
-- Input: $10/M tokens
-- Output: $30/M tokens
+### Your Individual Coding Tools
 
-A typical interaction (ask a question, AI uses 1-2 tools, returns answer):
-- ~2,000 input tokens (your message + system prompt + tool schemas)
-- ~1,000 output tokens (AI response + tool calls)
-- **Cost per interaction: ~$0.05**
+| Tool | Typical Monthly Cost |
+|------|---------------------|
+| VS Code + Copilot (Claude) | $10-39 subscription + API usage |
+| Claude Code (iTerm2) | ~$20-60 (API usage) |
+| OpenCode (Ghostty) | ~$20-60 (API usage) |
+| Zed (Claude API) | ~$20-60 (API usage) |
 
-Estimated usage per team member per day: 20-40 interactions
-- **Per person per day: $1.00 - $2.00**
-- **Per person per month: $20 - $40**
+### With Token Optimization (see [Token Savings Guide](claude-mem-setup-guide.md))
 
-For a 12-person team:
-- **Monthly API cost: $240 - $480**
-- **Total (infra + API): $300 - $540/mo**
+| Scenario | Monthly per person | Annual team savings |
+|----------|-------------------|-------------------|
+| No optimization | $20-80 | — |
+| With AGENTS.md + tool memory | $5-20 | **$7,000-22,000** |
 
-### Individual Setup Cost (Everyone Runs Their Own)
+### Why Both Are Worth It
 
-Our team uses a mix of individual AI tools, all with personal Claude API keys:
+Hermes gives you capabilities no local tool can match — querying ClickHouse, managing Plane, searching AWS, accessing cross-repo knowledge. Your local tools give you hands-on coding that Hermes can't do. Together they cover everything.
 
-| Tool | Who Uses It | Monthly Cost Per Person |
-|------|------------|----------------------|
-| VS Code + GitHub Copilot (Claude) | IDE coding | $10-39/mo subscription + API usage |
-| Claude Code (iTerm2) | Terminal agent | API usage only (~$20-60/mo) |
-| OpenCode (Ghostty) | Terminal agent | API usage only (~$20-60/mo) |
-| Zed (Claude API) | IDE coding | API usage only (~$20-60/mo) |
-| **Typical per person** | | **$20 - $80/mo** |
+The shared setup pays for itself if it saves each person **15-20 minutes per week** on data lookups, issue management, or knowledge questions. At engineering rates, that's $120-200/week saved across the team.
 
-For a 12-person team:
-- **Monthly cost: $240 - $960/mo**
-- No shared context, no tool integrations
-- Each person re-explains the same project context every session
+---
 
-### The Real Comparison
+## 14. FAQ
 
-| Factor | Shared Hermes | Individual Agents |
-|--------|--------------|-------------------|
-| **Monthly cost (12 people)** | $300-540 | $240-960 |
-| **Access to Plane issues** | ✅ Built-in | ❌ Manual copy-paste |
-| **Access to analytics DB** | ✅ Direct SQL | ❌ None |
-| **Access to AWS infra** | ✅ Read-only queries | ❌ None |
-| **Codebase knowledge** | ✅ All 12 repos indexed | ❌ Only what's open in IDE |
-| **Cross-session memory** | ✅ Remembers preferences | ⚠️ Possible with setup (see token savings guide) |
-| **Shared org knowledge** | ✅ Everyone gets it | ❌ Each person starts from zero |
-| **Web browsing & research** | ✅ Full browser automation | ⚠️ Limited in most tools |
-| **Admin control & visibility** | ✅ Role-based permissions | ❌ No central control |
-| **Works on mobile** | ✅ Web + Slack | ❌ IDE-only |
-| **Code execution in IDE** | ❌ Not in your IDE | ✅ Native IDE integration |
+**Q: How is this different from ChatGPT or Claude.ai?**
+It's connected to our internal systems. ChatGPT can't query our ClickHouse database or create Plane issues. Hermes can, because we've built custom tools that integrate with our actual infrastructure.
 
-### Key Insight: They're Complementary, Not Competing
+**Q: Should I stop using Claude Code / OpenCode / Zed / VS Code for coding?**
+No. Keep using them for coding. Use Hermes for everything else — data queries, project management, research, codebase questions, content drafting.
 
-The shared Hermes setup and individual IDE agents serve **different purposes**:
+**Q: Can it see my local files?**
+No. It runs on our EC2 server, not your laptop. It can access server files and query connected systems (Plane, ClickHouse, AWS), but not your local machine.
 
-**Use Hermes for:**
-- Querying data ("How many users last week?")
-- Project management ("Show me urgent issues")
-- Research ("Compare these two libraries")
-- Cross-team knowledge ("How does the auth service work?")
-- Quick questions on mobile or Slack
-- Tasks that need our integrations
+**Q: Is it safe to paste code?**
+Messages go through OpenRouter to Anthropic for processing. Use the same judgment as with any cloud AI tool — don't paste customer PII, credentials, or secrets.
 
-**Use your local tools for coding:**
-- **VS Code + Copilot** — autocomplete, inline edits, chat with codebase
-- **Claude Code (iTerm2)** — terminal-based agentic coding, file edits, shell commands
-- **OpenCode (Ghostty)** — terminal agent with multi-provider support, TUI interface
-- **Zed** — fast editor with built-in AI assistant, agent mode, inline assists
+**Q: Can I use it on my phone?**
+Yes. Both [chat.getarctan.com](https://chat.getarctan.com) and the Slack @hermesbot work on mobile.
 
-These give you direct access to your local files, can run code, and work with your IDE's full context.
+**Q: It gave me wrong data. What do I do?**
+AI can hallucinate. For data queries, ask it to show the SQL it ran — then verify the logic. For code suggestions, always test before using. For factual claims, cross-reference.
 
-### Recommendation
+**Q: How do I report a bug in Hermes itself?**
+Ask it: "Create a Plane issue in the ARCTAN project: '[describe the bug]'". Or message an admin directly.
 
-**Run both.** The shared setup costs ~$25-45/person/month for capabilities that no individual setup can replicate (database access, project management, shared knowledge). It's an org-wide multiplier, not a per-seat replacement.
+**Q: What model is it running?**
+Claude Opus 4.6 by Anthropic, routed through OpenRouter.
 
-For coding, keep using your individual tools. For everything else — research, analytics, project management, quick questions, team knowledge — use Hermes.
-
-### Reducing Your Individual Tool Costs
-
-Each of these tools supports persistent context files that dramatically reduce token waste. We've prepared a separate guide with specific setup instructions for each tool:
-
-👉 **[Token Savings Guide (claude-mem-setup-guide.md)](claude-mem-setup-guide.md)**
-
-Quick wins covered in that guide:
-- **AGENTS.md** — one file in each repo that every tool reads automatically
-- **CLAUDE.md + /memory** — built-in memory for Claude Code users
-- **Copilot Memory** — enable in GitHub settings for VS Code users
-- **Rules files** — persistent context for Zed users
-- **Cheap summarizer model** — use Haiku for context compression in OpenCode
-
-Estimated savings: **$6,900-22,700/year** across the team.
-
-### Break-Even Analysis
-
-The shared setup pays for itself if it saves each team member **just 15-20 minutes per week** on tasks like:
-- Looking up analytics data (vs. writing SQL manually or asking someone)
-- Searching through Plane issues (vs. clicking through the UI)
-- Answering "how does X work?" questions (vs. reading docs/code)
-- Drafting emails, specs, or summaries
-
-At an average engineering cost of $30-50/hour, 20 minutes/week × 12 people = 4 hours/week = **$120-200/week saved** — well above the $75-135/week cost.
+**Q: I'm stuck. What should I try first?**
+Just ask it: "What can you help me with?" — it'll list its capabilities. Or try one of the examples from [Section 3](#3-day-to-day-usage).
 
 ---
 
 ## Getting Help
 
-- **Chat**: Ask the AI itself — "What can you do?" or "Help me with..."
-- **Slack**: DM @hermesbot or mention it in a channel
-- **Admin**: Reach out to your admin for access issues or role changes
-- **Bugs**: Create a Plane issue in the ARCTAN project
+| Channel | When to use |
+|---------|------------|
+| Ask Hermes itself | "What can you do?" or "Help me with..." |
+| Slack @hermesbot | Quick questions from any channel |
+| Your admin | Access issues, role changes |
+| Plane (ARCTAN project) | Bug reports, feature requests |
 
 ---
 
-*Last updated: April 2026*
-*Setup maintained by the Engineering team*
-*Powered by Hermes Agent + Claude Opus 4.6*
+*Last updated: April 2026 · Powered by Hermes Agent + Claude Opus 4.6*
