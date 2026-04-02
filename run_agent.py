@@ -517,6 +517,8 @@ class AIAgent:
         checkpoint_max_snapshots: int = 50,
         pass_session_id: bool = False,
         persist_session: bool = True,
+        memory_dir: "Path" = None,
+        user_id: str = None,
     ):
         """
         Initialize the AI Agent.
@@ -1021,7 +1023,7 @@ class AIAgent:
                         "reasoning_config": reasoning_config,
                         "max_tokens": max_tokens,
                     },
-                    user_id=None,
+                    user_id=user_id,
                 )
             except Exception as e:
                 # Transient SQLite lock contention (e.g. CLI and gateway writing
@@ -1065,6 +1067,7 @@ class AIAgent:
                     self._memory_store = MemoryStore(
                         memory_char_limit=mem_config.get("memory_char_limit", 2200),
                         user_char_limit=mem_config.get("user_char_limit", 1375),
+                        memory_dir=memory_dir,
                     )
                     self._memory_store.load_from_disk()
             except Exception:

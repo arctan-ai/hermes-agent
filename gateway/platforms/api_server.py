@@ -166,7 +166,7 @@ class ResponseStore:
 
 _CORS_HEADERS = {
     "Access-Control-Allow-Methods": "GET, POST, DELETE, OPTIONS",
-    "Access-Control-Allow-Headers": "Authorization, Content-Type, Idempotency-Key",
+    "Access-Control-Allow-Headers": "Authorization, Content-Type, Idempotency-Key, X-OpenWebUI-User-Name, X-OpenWebUI-User-Id, X-OpenWebUI-User-Email, X-OpenWebUI-User-Role, X-Hermes-Session-Id",
 }
 
 
@@ -382,6 +382,8 @@ class APIServerAdapter(BasePlatformAdapter):
         session_id: Optional[str] = None,
         stream_delta_callback=None,
         tool_progress_callback=None,
+        memory_dir=None,
+        user_id: Optional[str] = None,
     ) -> Any:
         """
         Create an AIAgent instance using the gateway's runtime config.
@@ -415,6 +417,8 @@ class APIServerAdapter(BasePlatformAdapter):
             platform="api_server",
             stream_delta_callback=stream_delta_callback,
             tool_progress_callback=tool_progress_callback,
+            memory_dir=memory_dir,
+            user_id=user_id,
         )
         return agent
 
@@ -468,6 +472,25 @@ class APIServerAdapter(BasePlatformAdapter):
 
         stream = body.get("stream", False)
 
+        # ---- Per-user identity from Open WebUI (or any proxy) ----
+        # When enable_forward_user_info is set in Open WebUI's OPENAI_API_CONFIGS,
+        # these headers carry the authenticated user's identity.
+        owui_user_id = request.headers.get("X-OpenWebUI-User-Id", "").strip()
+        owui_user_name = request.headers.get("X-OpenWebUI-User-Name", "").strip()
+        owui_user_email = request.headers.get("X-OpenWebUI-User-Email", "").strip()
+        owui_user_role = request.headers.get("X-OpenWebUI-User-Role", "").strip()
+
+        # Build per-user memory directory if user identity is present
+        per_user_memory_dir = None
+        if owui_user_id:
+            from pathlib import Path
+            from hermes_constants import get_hermes_home
+            # Sanitize user_id for filesystem safety (replace non-alphanum with _)
+            import re as _re
+            safe_uid = _re.sub(r'[^a-zA-Z0-9_-]', '_', owui_user_id)
+            per_user_memory_dir = get_hermes_home() / "memories" / "users" / safe_uid
+            per_user_memory_dir.mkdir(parents=True, exist_ok=True)
+
         # Extract system message (becomes ephemeral system prompt layered ON TOP of core)
         system_prompt = None
         conversation_messages: List[Dict[str, str]] = []
@@ -514,6 +537,19 @@ class APIServerAdapter(BasePlatformAdapter):
             session_id = str(uuid.uuid4())
             # history already set from request body above
 
+        # ---- Inject user identity into ephemeral system prompt ----
+        if owui_user_name:
+            user_context_parts = [f"Current user: {owui_user_name}"]
+            if owui_user_email:
+                user_context_parts.append(f"Email: {owui_user_email}")
+            if owui_user_role:
+                user_context_parts.append(f"Role: {owui_user_role}")
+            user_context_line = " | ".join(user_context_parts)
+            if system_prompt:
+                system_prompt = f"[{user_context_line}]\n\n{system_prompt}"
+            else:
+                system_prompt = f"[{user_context_line}]"
+
         completion_id = f"chatcmpl-{uuid.uuid4().hex[:29]}"
         model_name = body.get("model", "hermes-agent")
         created = int(time.time())
@@ -553,6 +589,8 @@ class APIServerAdapter(BasePlatformAdapter):
                 stream_delta_callback=_on_delta,
                 tool_progress_callback=_on_tool_progress,
                 agent_ref=agent_ref,
+                memory_dir=per_user_memory_dir,
+                user_id=owui_user_id or None,
             ))
 
             return await self._write_sse_chat_completion(
@@ -567,6 +605,8 @@ class APIServerAdapter(BasePlatformAdapter):
                 conversation_history=history,
                 ephemeral_system_prompt=system_prompt,
                 session_id=session_id,
+                memory_dir=per_user_memory_dir,
+                user_id=owui_user_id or None,
             )
 
         idempotency_key = request.headers.get("Idempotency-Key")
@@ -809,6 +849,33 @@ class APIServerAdapter(BasePlatformAdapter):
         if body.get("truncation") == "auto" and len(conversation_history) > 100:
             conversation_history = conversation_history[-100:]
 
+        # ---- Per-user identity (same as chat completions) ----
+        owui_user_id_r = request.headers.get("X-OpenWebUI-User-Id", "").strip()
+        owui_user_name_r = request.headers.get("X-OpenWebUI-User-Name", "").strip()
+        owui_user_email_r = request.headers.get("X-OpenWebUI-User-Email", "").strip()
+        owui_user_role_r = request.headers.get("X-OpenWebUI-User-Role", "").strip()
+
+        per_user_memory_dir_r = None
+        if owui_user_id_r:
+            from pathlib import Path
+            from hermes_constants import get_hermes_home
+            import re as _re
+            safe_uid = _re.sub(r'[^a-zA-Z0-9_-]', '_', owui_user_id_r)
+            per_user_memory_dir_r = get_hermes_home() / "memories" / "users" / safe_uid
+            per_user_memory_dir_r.mkdir(parents=True, exist_ok=True)
+
+        if owui_user_name_r:
+            user_ctx_parts = [f"Current user: {owui_user_name_r}"]
+            if owui_user_email_r:
+                user_ctx_parts.append(f"Email: {owui_user_email_r}")
+            if owui_user_role_r:
+                user_ctx_parts.append(f"Role: {owui_user_role_r}")
+            user_ctx_line = " | ".join(user_ctx_parts)
+            if instructions:
+                instructions = f"[{user_ctx_line}]\n\n{instructions}"
+            else:
+                instructions = f"[{user_ctx_line}]"
+
         # Run the agent (with Idempotency-Key support)
         session_id = str(uuid.uuid4())
 
@@ -818,6 +885,8 @@ class APIServerAdapter(BasePlatformAdapter):
                 conversation_history=conversation_history,
                 ephemeral_system_prompt=instructions,
                 session_id=session_id,
+                memory_dir=per_user_memory_dir_r,
+                user_id=owui_user_id_r or None,
             )
 
         idempotency_key = request.headers.get("Idempotency-Key")
@@ -1227,6 +1296,8 @@ class APIServerAdapter(BasePlatformAdapter):
         stream_delta_callback=None,
         tool_progress_callback=None,
         agent_ref: Optional[list] = None,
+        memory_dir=None,
+        user_id: Optional[str] = None,
     ) -> tuple:
         """
         Create an agent and run a conversation in a thread executor.
@@ -1247,6 +1318,8 @@ class APIServerAdapter(BasePlatformAdapter):
                 session_id=session_id,
                 stream_delta_callback=stream_delta_callback,
                 tool_progress_callback=tool_progress_callback,
+                memory_dir=memory_dir,
+                user_id=user_id,
             )
             if agent_ref is not None:
                 agent_ref[0] = agent
