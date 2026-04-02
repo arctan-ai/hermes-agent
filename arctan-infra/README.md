@@ -1,66 +1,66 @@
 # Arctan Hermes Infrastructure
 
-Configuration and setup for the Arctan team's Hermes Agent deployment.
+Configuration, custom skills, and deployment files for the Arctan Hermes Agent instance.
 
-## Architecture
+## Structure
 
 ```
-chat.getarctan.com
-      │ HTTPS (Caddy auto-SSL)
-      ▼
-  Open WebUI (Docker, port 3000)
-      │ HTTP + X-OpenWebUI-User-* headers
-      ▼
-  Hermes Gateway (port 8642)
-      ├── API Server (Open WebUI backend)
-      ├── Slack (@hermesbot in Arctan workspace)
-      ├── Webhook listener (port 8644)
-      └── Cron scheduler
+arctan-infra/
+├── config/
+│   ├── .env.example              # Environment template (no secrets)
+│   ├── role_permissions.yaml     # Role-based tool access control
+│   └── ORG.md                    # Shared org memory (injected for all users)
+├── caddy/
+│   └── Caddyfile                 # HTTPS reverse proxy config
+├── systemd/
+│   └── hermes-gateway.service    # Systemd service for the gateway
+├── skills/
+│   ├── arctan-team-knowledge/    # Product architecture & repo knowledge
+│   ├── clickhouse-analytics/     # ClickHouse DB access & queries
+│   └── plane/                    # Plane.so project management API
+└── scripts/                      # Deployment/maintenance scripts
 ```
 
-## Components
+## Deployment
 
-| Component | Location | Managed by |
-|-----------|----------|------------|
-| Hermes Agent | `~/.hermes/hermes-agent/` | git (arctan-ai/hermes-agent, branch: arctan/production) |
-| Hermes config | `~/.hermes/config.yaml` | this repo (template) |
-| Hermes secrets | `~/.hermes/.env` | NOT tracked (secrets) |
-| Open WebUI | Docker container `open-webui` | `docker/docker-compose.yml` |
-| Caddy | `/etc/caddy/Caddyfile` | `caddy/Caddyfile` |
-| Setup plan | `docs/setup.md` | this repo |
+Server: EC2 t3.large, ap-south-1 (43.204.147.51)
+Domain: https://chat.getarctan.com
+Branch: arctan/production
 
-## Quick Reference
+### Quick Deploy
 
 ```bash
-# Hermes
-hermes gateway status          # check gateway
-hermes gateway restart         # restart after config changes
-cd ~/.hermes/hermes-agent && git log --oneline -5  # check deployed version
-
-# Open WebUI
-docker ps                      # check container
-docker logs open-webui --tail 20  # check logs
-docker restart open-webui      # restart
-
-# Caddy (HTTPS)
-sudo systemctl status caddy    # check
-sudo systemctl restart caddy   # restart
-cat /etc/caddy/Caddyfile       # config
-
-# Update Hermes from upstream
+# On the EC2 server
 cd ~/.hermes/hermes-agent
-git fetch upstream
-git checkout main && git merge upstream/main
-git checkout arctan/production && git rebase main
-git push origin arctan/production --force-with-lease
-hermes gateway restart
+git pull origin arctan/production
+
+# Copy config files to their runtime locations
+cp arctan-infra/config/role_permissions.yaml ~/.hermes/
+cp arctan-infra/caddy/Caddyfile /etc/caddy/Caddyfile
+cp arctan-infra/systemd/hermes-gateway.service /etc/systemd/system/
+
+# Copy custom skills
+cp -r arctan-infra/skills/* ~/.hermes/skills/productivity/ 2>/dev/null
+cp -r arctan-infra/skills/clickhouse-analytics ~/.hermes/skills/data-science/
+
+# Restart services
+sudo systemctl daemon-reload
+sudo systemctl restart hermes-gateway
+sudo systemctl restart caddy
 ```
 
-## Secrets (not tracked)
+## Role Permissions
 
-These live in `~/.hermes/.env` and must be set manually:
-- `ANTHROPIC_API_KEY` or `OPENROUTER_API_KEY`
-- `API_SERVER_KEY`
-- `SLACK_BOT_TOKEN`, `SLACK_APP_TOKEN`
-- `SLACK_HOME_CHANNEL`
-- `GITHUB_TOKEN`
+Edit `config/role_permissions.yaml` to control tool access per Open WebUI role.
+Changes are auto-reloaded (no restart needed).
+
+| Role    | Access Level |
+|---------|-------------|
+| admin   | Full (all tools) |
+| user    | Read/query only (no terminal, no file writes) |
+| pending | Minimal (web search, skills view, clarify) |
+
+## Secrets
+
+The `.env.example` is a template. Actual secrets are in `~/.hermes/.env` on the
+server (not tracked in git). Copy `.env.example` and fill in real values.

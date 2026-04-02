@@ -1,0 +1,24 @@
+[Unit]
+Description=Hermes Agent Gateway (OpenAI-compatible API + Slack)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=ubuntu
+Group=ubuntu
+WorkingDirectory=/home/ubuntu/.hermes/hermes-agent
+EnvironmentFile=/home/ubuntu/.hermes/.env
+Environment=API_SERVER_HOST=0.0.0.0
+ExecStart=/home/ubuntu/.hermes/hermes-agent/venv/bin/python -m hermes_cli.main gateway run --replace
+Restart=on-failure
+RestartSec=5
+StartLimitIntervalSec=60
+StartLimitBurst=5
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=hermes-gateway
+
+[Install]
+WantedBy=multi-user.target
