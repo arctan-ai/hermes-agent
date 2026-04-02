@@ -316,7 +316,7 @@ Slack conversations have the same tool access as your Open WebUI role.
 No. This is Hermes Agent running Claude (by Anthropic) as the underlying model. Unlike ChatGPT, it can take actions — run queries, browse the web, manage Plane issues. It's also connected to our internal systems.
 
 **Q: Can it write code for me?**
-Yes, it can help write, review, and explain code. However, team members (non-admin) cannot run code on the server. Use it for code generation, review, and explanation — then copy the code to your local IDE.
+Yes, it can help write, review, and explain code. However, for hands-on coding, use your local tools (VS Code + Copilot, Claude Code, OpenCode, or Zed) — they have direct access to your files and can run code. Use Hermes for code review, explaining unfamiliar code, generating boilerplate, and architectural questions.
 
 **Q: Can it access my local files?**
 No. It runs on our server, not on your computer. It can only access files on the server and query our connected systems (Plane, ClickHouse, AWS).
@@ -380,19 +380,20 @@ For a 12-person team:
 
 ### Individual Setup Cost (Everyone Runs Their Own)
 
-Each person running Claude directly (e.g., via Cursor, Claude Code, VS Code + Claude API):
+Our team uses a mix of individual AI tools, all with personal Claude API keys:
 
-| Component | Monthly Cost Per Person |
-|-----------|----------------------|
-| Claude API (direct via Anthropic) | Same token pricing |
-| OR Claude Pro subscription | $20/mo (limited usage) |
-| OR Cursor Pro | $20/mo (includes some AI usage) |
-| Additional API usage beyond limits | $20-60/mo |
-| **Per person total** | **$20 - $80/mo** |
+| Tool | Who Uses It | Monthly Cost Per Person |
+|------|------------|----------------------|
+| VS Code + GitHub Copilot (Claude) | IDE coding | $10-39/mo subscription + API usage |
+| Claude Code (iTerm2) | Terminal agent | API usage only (~$20-60/mo) |
+| OpenCode (Ghostty) | Terminal agent | API usage only (~$20-60/mo) |
+| Zed (Claude API) | IDE coding | API usage only (~$20-60/mo) |
+| **Typical per person** | | **$20 - $80/mo** |
 
 For a 12-person team:
 - **Monthly cost: $240 - $960/mo**
 - No shared context, no tool integrations
+- Each person re-explains the same project context every session
 
 ### The Real Comparison
 
@@ -403,7 +404,7 @@ For a 12-person team:
 | **Access to analytics DB** | ✅ Direct SQL | ❌ None |
 | **Access to AWS infra** | ✅ Read-only queries | ❌ None |
 | **Codebase knowledge** | ✅ All 12 repos indexed | ❌ Only what's open in IDE |
-| **Cross-session memory** | ✅ Remembers preferences | ⚠️ Depends on tool |
+| **Cross-session memory** | ✅ Remembers preferences | ⚠️ Possible with setup (see token savings guide) |
 | **Shared org knowledge** | ✅ Everyone gets it | ❌ Each person starts from zero |
 | **Web browsing & research** | ✅ Full browser automation | ⚠️ Limited in most tools |
 | **Admin control & visibility** | ✅ Role-based permissions | ❌ No central control |
@@ -422,18 +423,34 @@ The shared Hermes setup and individual IDE agents serve **different purposes**:
 - Quick questions on mobile or Slack
 - Tasks that need our integrations
 
-**Use your local IDE agent (Cursor, Claude Code, etc.) for:**
-- Writing code with full repo context
-- Debugging with stack traces
-- Refactoring large files
-- Running tests locally
-- Anything that needs your local filesystem
+**Use your local tools for coding:**
+- **VS Code + Copilot** — autocomplete, inline edits, chat with codebase
+- **Claude Code (iTerm2)** — terminal-based agentic coding, file edits, shell commands
+- **OpenCode (Ghostty)** — terminal agent with multi-provider support, TUI interface
+- **Zed** — fast editor with built-in AI assistant, agent mode, inline assists
+
+These give you direct access to your local files, can run code, and work with your IDE's full context.
 
 ### Recommendation
 
 **Run both.** The shared setup costs ~$25-45/person/month for capabilities that no individual setup can replicate (database access, project management, shared knowledge). It's an org-wide multiplier, not a per-seat replacement.
 
-For coding specifically, individual IDE tools may still be better since they have direct access to your local files and can run code. But for everything else — research, analytics, project management, quick questions, team knowledge — the shared setup is both cheaper and more capable.
+For coding, keep using your individual tools. For everything else — research, analytics, project management, quick questions, team knowledge — use Hermes.
+
+### Reducing Your Individual Tool Costs
+
+Each of these tools supports persistent context files that dramatically reduce token waste. We've prepared a separate guide with specific setup instructions for each tool:
+
+👉 **[Token Savings Guide (claude-mem-setup-guide.md)](claude-mem-setup-guide.md)**
+
+Quick wins covered in that guide:
+- **AGENTS.md** — one file in each repo that every tool reads automatically
+- **CLAUDE.md + /memory** — built-in memory for Claude Code users
+- **Copilot Memory** — enable in GitHub settings for VS Code users
+- **Rules files** — persistent context for Zed users
+- **Cheap summarizer model** — use Haiku for context compression in OpenCode
+
+Estimated savings: **$6,900-22,700/year** across the team.
 
 ### Break-Even Analysis
 
