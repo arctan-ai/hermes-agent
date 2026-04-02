@@ -360,7 +360,7 @@ Every time you start a new session in Claude Code, OpenCode, Zed, or VS Code, Cl
 
 We have a detailed per-tool guide:
 
-👉 **[Token Savings Guide](claude-mem-setup-guide.md)**
+👉 **[Token Savings Guide](token-savings-guide.md)**
 
 Quick summary of what to do for each tool:
 
@@ -495,7 +495,7 @@ It remembers the conversation:
 | OpenCode (Ghostty) | ~$20-60 (API usage) |
 | Zed (Claude API) | ~$20-60 (API usage) |
 
-### With Token Optimization (see [Token Savings Guide](claude-mem-setup-guide.md))
+### With Token Optimization (see [Token Savings Guide](token-savings-guide.md))
 
 | Scenario | Monthly per person | Annual team savings |
 |----------|-------------------|-------------------|
