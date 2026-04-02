@@ -1,266 +1,439 @@
-# Save Money on Claude: Install claude-mem
+# Stop Wasting Tokens: AI Memory Setup for Your Workflow
 
-> **One-time setup. 2 minutes. Saves ~60-80% on Claude token costs for coding.**
-
----
-
-## The Problem You Don't Know You Have
-
-Every time you start a new Claude Code session to work on the same project, Claude starts with **zero memory** of what you did before. So you end up re-explaining:
-
-- "This is a Tauri app with Rust backend and React frontend..."
-- "The audio pipeline flows from cpal → DeepFilterNet → Beatrice..."
-- "The bug was in deep_filter.rs, line 97..."
-
-Each time, Claude reads your files again, rebuilds context, and burns through tokens — **just to get back to where you left off yesterday**.
-
-This is like hiring a contractor who gets amnesia every evening and needs a full re-briefing every morning.
-
-**The cost of this:**
-```
-Without memory:  ~50,000 tokens to rebuild context per session
-                 × 5 sessions/day
-                 × 22 working days
-                 = 5.5 million wasted tokens/month
-                 = ~$55-165/month burned on re-explaining
-                   (per person!)
-```
+> **10 minutes of setup. Save 60-80% on Claude context costs. Works with every tool we use.**
 
 ---
 
-## The Fix: claude-mem
+## The Problem
 
-**claude-mem** is a plugin for Claude Code that gives Claude persistent memory.
-
-After you install it:
-1. Claude remembers what you worked on yesterday
-2. It remembers the bugs you fixed, decisions you made, patterns you followed
-3. It compresses everything into tiny summaries (not raw file dumps)
-4. Next session, it loads only what's relevant — in ~2,000 tokens instead of 50,000
+Every time you start a new AI session on the same project, Claude starts from scratch. It re-reads files, re-discovers patterns, re-learns your conventions. You're paying for the same context over and over.
 
 ```
-With claude-mem:  ~2,000 tokens of compressed context per session
-                  (instead of 50,000)
-                  
-                  That's a 96% reduction in context setup cost.
+Session 1:  "This is a Tauri app with Rust + React..."     50,000 tokens
+Session 2:  "This is a Tauri app with Rust + React..."     50,000 tokens  (again)
+Session 3:  "This is a Tauri app with Rust + React..."     50,000 tokens  (again)
 ```
 
-**It's free, open-source, and used by 44,000+ developers.**
+**That's ~$55-165/month per person in wasted context tokens.**
+
+The fix: give Claude persistent context so it doesn't start from zero. How you do it depends on which tool you use.
 
 ---
 
-## Install It (2 minutes)
+## Find Your Setup
 
-### Prerequisites
+| If you use... | Jump to... |
+|--------------|------------|
+| **VS Code + Copilot** (with Claude API) | [Section 1](#1-vs-code--github-copilot) |
+| **iTerm2 + Claude Code** | [Section 2](#2-claude-code-iterm2) |
+| **Ghostty + OpenCode** | [Section 3](#3-opencode-ghostty) |
+| **Zed** (with Claude API) | [Section 4](#4-zed-editor) |
+| All of the above | [Section 5](#5-the-shared-layer) — do this first! |
 
-You need **Claude Code** installed. If you don't have it yet:
+---
+
+## 5. The Shared Layer (Do This First — Everyone Benefits)
+
+Before touching your individual tool, we'll add context files to our repos that **every tool reads automatically**. One setup, works everywhere.
+
+### AGENTS.md — The Universal Context File
+
+`AGENTS.md` is a convention that Claude Code, OpenCode, Zed, and Copilot all support. It tells the AI about your project's structure, conventions, and how things work.
+
+**The arctan-client repo already has one!** Check if your repo does too:
+
 ```bash
-npm install -g @anthropic-ai/claude-code
+ls AGENTS.md
 ```
 
-You also need **Node.js 18+** (you probably already have this).
+If it doesn't exist, create one. Here's a template:
 
-### Step 1: Open Claude Code
+```markdown
+# AGENTS.md
 
-Open your terminal and start Claude Code in any project:
+## Project Overview
+[What this project does, in 2-3 sentences]
+
+## Tech Stack
+[Languages, frameworks, key libraries]
+
+## Project Structure
+[Key directories and what they contain]
+
+## Code Conventions
+[Naming, style, patterns to follow]
+
+## Common Tasks
+[How to build, test, deploy]
+```
+
+**Why this works:** Every AI tool reads this file automatically. You write it once, and Claude knows your project in every tool — VS Code, terminal, Zed, everywhere. No more re-explaining.
+
+**Token impact:** A good AGENTS.md is ~500-1000 tokens. It replaces 10,000-50,000 tokens of Claude re-discovering your project by reading random files.
+
+### Commit it to Git
+
+AGENTS.md goes in your repo root. When everyone pulls, everyone gets it:
+
 ```bash
-cd your-project
-claude
+git add AGENTS.md
+git commit -m "docs: add AGENTS.md for AI context"
+git push
 ```
 
-### Step 2: Install the Plugin
+---
 
-Inside the Claude Code session, type these two commands:
+## 1. VS Code + GitHub Copilot
+
+### What You Have
+VS Code with GitHub Copilot, using Claude as the model via your API key.
+
+### Built-in Context System
+
+Copilot already has three context features most people don't use:
+
+#### a) Custom Instructions File (5 minutes)
+
+Create `.github/copilot-instructions.md` in your repo root:
+
+```markdown
+# Copilot Instructions
+
+## Project
+This is [project name] — [brief description].
+
+## Conventions
+- [Your coding conventions]
+- [Preferred patterns]
+- [What to avoid]
+
+## Architecture
+- [Key architectural decisions]
+- [Important file locations]
+```
+
+This file is **automatically included** in every Copilot Chat request. Write it once, forget about it.
+
+#### b) Copilot Memory (2 minutes)
+
+Copilot now has built-in memory (launched April 2025). Enable it:
+
+1. Go to **github.com** → **Settings** → **Copilot** → **Features**
+2. Turn on **Memory**
+3. Done
+
+Now Copilot remembers your preferences across sessions. You can tell it things like:
+- "I prefer functional components in React"
+- "Always use early returns in Rust"
+- "Our API endpoints follow REST conventions"
+
+It stores these and applies them automatically.
+
+#### c) Scoped Instructions (optional, advanced)
+
+For different file types, create files in `.github/instructions/`:
+
+```
+.github/instructions/
+  rust-conventions.md     ← applies when editing .rs files
+  react-conventions.md    ← applies when editing .tsx files
+  testing-guidelines.md   ← applies when editing test files
+```
+
+Each file can have a front matter with a glob pattern to scope when it's applied.
+
+### Token Savings Tips
+
+1. **Use `@file` references** instead of pasting code into chat
+2. **Start new chats** for unrelated topics (old history burns tokens)
+3. **Use Sonnet** for routine tasks, Opus only when you need deep reasoning
+4. **Keep instruction files concise** — they load on every request
+
+---
+
+## 2. Claude Code (iTerm2)
+
+### What You Have
+Claude Code CLI in iTerm2, using your Anthropic API key.
+
+### Built-in Memory: CLAUDE.md (2 minutes)
+
+Claude Code has the **best** built-in memory system. It uses `CLAUDE.md` files — and you might not be using them.
+
+#### How It Works
+
+Claude Code reads `CLAUDE.md` files from three places:
+
+```
+~/.claude/CLAUDE.md          ← Global (all projects)
+./CLAUDE.md                  ← Project root (this project)
+./src/CLAUDE.md              ← Directory-specific (this folder)
+```
+
+#### Quick Setup
+
+**Step 1: Create a global CLAUDE.md**
+
+```bash
+mkdir -p ~/.claude
+cat > ~/.claude/CLAUDE.md << 'EOF'
+# Global Preferences
+
+- I work at Arctan on real-time voice processing
+- Prefer concise responses with code examples
+- Use early returns and guard clauses
+- Always handle errors explicitly
+- My timezone is IST
+EOF
+```
+
+**Step 2: The `/memory` command**
+
+While working in Claude Code, whenever Claude learns something useful, type:
+
+```
+/memory
+```
+
+Claude will save key observations to your project's CLAUDE.md automatically. Do this at the end of each session — it takes 2 seconds and saves thousands of tokens next time.
+
+**Step 3: Also reads AGENTS.md**
+
+Claude Code automatically reads `AGENTS.md` files too. If you did [Section 5](#5-the-shared-layer), you're already covered.
+
+### claude-mem Plugin (5 minutes — optional, extra savings)
+
+For even more automatic memory, install **claude-mem**:
 
 ```
 /plugin marketplace add thedotmack/claude-mem
-```
-
-Then:
-
-```
 /plugin install claude-mem
 ```
 
-### Step 3: Restart Claude Code
+Restart Claude Code. Now it:
+- Automatically captures what you work on (no /memory needed)
+- Compresses observations into tiny summaries
+- Injects only relevant context in future sessions
+- Has a web dashboard at http://localhost:37777
 
-Exit (`Ctrl+C` or type `/exit`) and start Claude Code again:
+**claude-mem vs CLAUDE.md:**
+
+| Feature | CLAUDE.md | claude-mem |
+|---------|-----------|------------|
+| Setup | Built-in, zero install | Plugin, 2 commands |
+| How it works | You manually run /memory | Fully automatic |
+| What it stores | Key facts you tell it | Everything Claude does |
+| Token savings | Good (~60% reduction) | Better (~80% reduction) |
+| Recommendation | **Start here** | Add later for max savings |
+
+### Token Savings Tips
+
+1. **Use `/compact`** when conversations get long — it summarizes history
+2. **Use Haiku** for simple tasks: `claude --model claude-3-5-haiku "quick question"`
+3. **Run `/memory` before ending** each significant session
+4. **Keep CLAUDE.md under 2000 tokens** — it loads every session
+
+---
+
+## 3. OpenCode (Ghostty)
+
+### What You Have
+OpenCode CLI in Ghostty terminal, using your Anthropic API key.
+
+### Context Files (5 minutes)
+
+OpenCode supports the same AGENTS.md convention plus its own context system:
+
+#### Context File Locations
+
+```
+~/.config/opencode/context.md    ← Global (all projects)
+.opencode/context.md             ← Project-specific
+opencode.md                      ← Alt project-specific
+AGENTS.md                        ← Standard convention (auto-read)
+```
+
+**Quick Setup:**
 
 ```bash
-claude
+# Global context
+mkdir -p ~/.config/opencode
+cat > ~/.config/opencode/context.md << 'EOF'
+# Coding Preferences
+
+- I work at Arctan on real-time audio/video processing
+- Prefer concise, well-tested code
+- Always handle errors explicitly
+- Use early returns
+EOF
 ```
 
-**That's it. You're done.**
+For project-specific context, create `.opencode/context.md` in your repo root (or just use AGENTS.md from [Section 5](#5-the-shared-layer)).
+
+You can also add custom files in your config:
+
+```toml
+# opencode.toml or .opencode/config.toml
+[context]
+files = [
+  "./docs/architecture.md",
+  "./CONVENTIONS.md"
+]
+```
+
+### Use a Cheap Summarizer Model (2 minutes)
+
+OpenCode has a brilliant feature: you can use a **cheaper model** for context summarization. Add this to your config:
+
+```toml
+[model.default]
+provider = "anthropic"
+model = "claude-sonnet-4-20250514"
+
+[model.summarizer]
+provider = "anthropic"
+model = "claude-3-5-haiku-20241022"
+max_tokens = 4000
+```
+
+Now when conversations get long, OpenCode uses the cheap Haiku model to summarize old messages instead of the expensive Sonnet/Opus. This alone can cut costs 5-10x on long sessions.
+
+### Token Savings Tips
+
+1. **Use `/compact`** to manually trigger context summarization
+2. **Set a cheap summarizer** (Haiku) — see above
+3. **Use session forking** for exploring different approaches
+4. **Keep context files under 1000 tokens** each
+5. **Use `--prompt`** for one-shot questions (avoids session overhead)
 
 ---
 
-## What Happens Now (You Don't Need to Do Anything)
+## 4. Zed Editor
 
-From this point on, claude-mem works **automatically in the background**:
+### What You Have
+Zed with built-in AI assistant, using your Anthropic API key.
 
-### During Your Session
-- claude-mem quietly watches what Claude does (file edits, tool calls, decisions)
-- It captures key observations without slowing anything down
-- You won't notice any difference in how you use Claude
+### Rules Files (3 minutes)
 
-### When You End a Session
-- claude-mem compresses everything Claude learned into concise summaries
-- These are stored locally on your machine (in a SQLite database)
-- Nothing is sent anywhere — it's all local
+Zed uses "rules files" — persistent instructions loaded into every AI interaction.
 
-### When You Start a New Session
-- claude-mem automatically loads relevant compressed context
-- Claude "remembers" your project, recent work, and decisions
-- You can jump straight into productive work — no re-explaining needed
+#### Rules File Locations
 
-### What It Looks Like
-
-**Before claude-mem:**
 ```
-You: "I'm working on the audio pipeline in arctan-client. 
-      The issue is crackling when..."
-[30 minutes of Claude re-reading files and rebuilding context]
-[50,000 tokens spent just getting oriented]
+.zed/rules.md           ← Project rules (in repo root)
+.rules                  ← Alt project rules
+~/.config/zed/rules.md  ← Global rules (all projects)
+AGENTS.md               ← Standard convention (auto-read, scoped by directory)
 ```
 
-**After claude-mem:**
+**Quick Setup:**
+
+```bash
+# Global rules
+cat > ~/.config/zed/rules.md << 'EOF'
+# AI Rules
+
+- Be concise and practical
+- Show code, not just explanations
+- Handle errors explicitly
+- Follow existing code patterns in the project
+EOF
 ```
-You: "Continue fixing the crackling issue"
-Claude: "I see from our previous session that we identified the 
-         spin-wait polling in deep_filter.rs line 97 as the root 
-         cause. We were implementing the event-based approach. 
-         Let me pick up where we left off..."
-[2,000 tokens of compressed context — straight to work]
+
+For project-specific rules, create `.zed/rules.md` in your repo root, or use AGENTS.md from [Section 5](#5-the-shared-layer).
+
+### Control Tab Context (biggest token saver)
+
+By default, Zed sends ALL your open tabs as context. This burns tokens fast. Configure it:
+
+```json
+// ~/.config/zed/settings.json
+{
+  "assistant": {
+    "context": {
+      "tabs": "pinned",    // Only include tabs you explicitly pin
+      "rules": true
+    }
+  }
+}
 ```
+
+Tab context modes:
+- `"none"` — **cheapest**, no tab context
+- `"pinned"` — **recommended**, only tabs you pin
+- `"following"` — most expensive (default), includes whatever you're looking at
+
+### Thread References
+
+Zed doesn't have persistent memory yet, but you can reference past conversations:
+- Type `@thread` in chat to search and include previous threads
+- This avoids re-explaining decisions you've already discussed
+
+### Token Savings Tips
+
+1. **Set tabs to "pinned"** — biggest single saving
+2. **Use `@file` mentions** instead of opening all files as tabs
+3. **Start new threads** for new topics
+4. **Use inline assist** (Ctrl+Enter) on selections for targeted help
+5. **Keep rules files concise** — they load on every interaction
 
 ---
 
-## Useful Commands (Optional — You Don't Need These to Get Started)
+## Cheat Sheet: What Goes Where
 
-Once claude-mem is running, you have a few optional tools:
+| File | Who reads it | Where to put it |
+|------|-------------|-----------------|
+| `AGENTS.md` | Claude Code, OpenCode, Zed, Copilot* | Repo root (commit to git) |
+| `CLAUDE.md` | Claude Code only | Repo root + `~/.claude/` |
+| `.github/copilot-instructions.md` | VS Code Copilot | Repo root (commit to git) |
+| `.opencode/context.md` | OpenCode only | Repo root |
+| `.zed/rules.md` | Zed only | Repo root |
+| `~/.config/zed/rules.md` | Zed | Home dir (personal) |
+| `~/.config/opencode/context.md` | OpenCode | Home dir (personal) |
+| `~/.claude/CLAUDE.md` | Claude Code | Home dir (personal) |
 
-### Search Your Memory
-Inside a Claude Code session:
-```
-/mem-search "audio pipeline crackling fix"
-```
-This searches across all your past sessions for relevant context.
+\* Copilot reads AGENTS.md via its coding agent feature.
 
-### View the Memory Dashboard
-Open in your browser while Claude Code is running:
-```
-http://localhost:37777
-```
-This shows a real-time view of what claude-mem has stored.
-
-### Mark Something as Private
-If you're working with sensitive data you don't want stored:
-```
-<private>
-This API key is sk-abc123...
-</private>
-```
-Anything inside `<private>` tags won't be saved to memory.
+**Pro tip:** Put shared knowledge in `AGENTS.md` (everyone benefits), tool-specific preferences in the tool's own config file.
 
 ---
 
-## How Much Money Does This Actually Save?
+## Expected Savings
 
-### Per Person
+### Per Person Per Month
 
-| Metric | Without claude-mem | With claude-mem |
-|--------|-------------------|-----------------|
-| Context tokens per session | ~50,000 | ~2,000 |
-| Sessions per day | 5 | 5 |
-| Monthly context tokens | 5.5M | 220K |
-| Monthly context cost (Claude) | $55-165 | $2-7 |
-| **Monthly savings** | — | **$50-160** |
+| Scenario | Context Tokens/Session | Monthly Cost |
+|----------|----------------------|-------------|
+| No optimization | ~50,000 | $55-165 |
+| AGENTS.md only | ~15,000 | $17-50 |
+| AGENTS.md + tool memory | ~5,000 | $6-17 |
+| Full setup (all of the above) | ~2,000 | $2-7 |
 
 ### For Our 12-Person Team
 
-| Metric | Without | With | Savings |
-|--------|---------|------|---------|
-| Monthly context tokens | 66M | 2.6M | 63.4M tokens |
-| Monthly context cost | $660-1,980 | $26-78 | **$634-1,902** |
-| Annual savings | — | — | **$7,600-22,800** |
-
-> **Note:** These are estimates for the context re-building cost only. You'll still spend tokens on the actual coding work — claude-mem just eliminates the wasteful "getting Claude up to speed" cost that you pay every single session.
-
-### The Hidden Benefit: Speed
-
-Beyond cost, claude-mem makes sessions **faster**. Instead of spending the first 5-10 minutes of each session waiting for Claude to re-orient, you start productive work immediately. That's 25-50 minutes saved per day per person.
+| Scenario | Monthly Cost | Annual Savings |
+|----------|-------------|---------------|
+| No optimization | $660-1,980 | — |
+| Full setup | $24-84 | **$6,900-22,700** |
 
 ---
 
-## FAQ
+## Quick Action Items
 
-**Q: Does it slow down Claude Code?**
-No. It runs in the background and doesn't affect Claude's response time.
+**Today (5 minutes):**
+- [ ] Check if your repo has AGENTS.md — if not, create one
+- [ ] Set up your tool's context/rules file (see your section above)
 
-**Q: Where is the data stored?**
-Locally on your machine. Nothing is sent to any external server.
+**This Week (10 minutes):**
+- [ ] If you use Claude Code: start using `/memory` at end of sessions
+- [ ] If you use VS Code: enable Copilot Memory in GitHub settings
+- [ ] If you use Zed: change tab context to "pinned"
+- [ ] If you use OpenCode: add a cheap summarizer model to config
 
-**Q: Does it work with our Arctan repos?**
-Yes. It works with any project. It's especially useful for complex codebases like arctan-client (Rust + React) where context setup is expensive.
-
-**Q: Can I use it alongside the Hermes AI assistant?**
-Yes. They serve different purposes:
-- **claude-mem + Claude Code** = coding with persistent memory (local, in your IDE)
-- **Hermes** = queries, analytics, project management, research (shared, in browser/Slack)
-
-**Q: What if I switch between projects?**
-claude-mem stores memory per project directory. Each project gets its own memory.
-
-**Q: Can I delete the memory if needed?**
-Yes. The memory is stored in `.claude-mem/` in your project directory. Delete it to start fresh.
-
-**Q: Does it work on Mac and Windows?**
-Yes. Anywhere Claude Code runs, claude-mem works.
-
-**Q: Is it safe for production codebases?**
-Yes. It only stores summaries of observations — not your actual source code. Use `<private>` tags for sensitive content.
-
----
-
-## Troubleshooting
-
-### "Plugin not found"
-Make sure you run both commands in order:
-```
-/plugin marketplace add thedotmack/claude-mem
-/plugin install claude-mem
-```
-Then restart Claude Code.
-
-### "Worker not starting"
-Check that Node.js 18+ is installed:
-```bash
-node --version
-# Should be v18.0.0 or higher
-```
-
-### "Memory not loading in new sessions"
-Make sure you're starting Claude Code from the same project directory. Memory is per-project.
-
-### Still having issues?
-Ask the Hermes AI assistant on https://chat.getarctan.com:
-> "I'm having trouble with claude-mem, it says [error message]. How do I fix it?"
-
----
-
-## Summary
-
-| What | Details |
-|------|---------|
-| **What to install** | claude-mem plugin for Claude Code |
-| **How long** | 2 minutes |
-| **Effort** | Zero after install (fully automatic) |
-| **Token savings** | ~60-80% on context setup costs |
-| **Money saved** | ~$50-160/person/month |
-| **Speed improvement** | 5-10 minutes saved per session |
-| **Privacy** | All data stored locally, nothing shared |
-
-**Install it today. Your future self (and your API bill) will thank you.**
+**Optional (when you want max savings):**
+- [ ] Claude Code users: install claude-mem plugin
+- [ ] Create `.github/copilot-instructions.md` for the team's VS Code users
+- [ ] Add project-specific rules to your most-used repos
 
 ---
 
