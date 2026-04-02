@@ -447,8 +447,44 @@ def _extract_relevant(content: str, query_words: set, context_lines: int = 5) ->
 
 
 # ---------------------------------------------------------------------------
+# Auth Middleware
+# ---------------------------------------------------------------------------
+
+from starlette.middleware import Middleware
+from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.responses import JSONResponse
+
+
+class BearerAuthMiddleware(BaseHTTPMiddleware):
+    """Reject requests without a valid Bearer token.
+
+    Skips auth if ARCTAN_MCP_TOKEN is empty (allows unauthenticated local dev).
+    """
+
+    async def dispatch(self, request, call_next):
+        if not AUTH_TOKEN:
+            return await call_next(request)
+
+        auth_header = request.headers.get("Authorization", "")
+        if auth_header == f"Bearer {AUTH_TOKEN}":
+            return await call_next(request)
+
+        return JSONResponse(
+            {"error": "Unauthorized — set Authorization: Bearer <ARCTAN_MCP_TOKEN>"},
+            status_code=401,
+        )
+
+
+# ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
 if __name__ == "__main__":
-    print(f"Starting Arctan MCP server on port {PORT}...")
-    mcp_server.run(transport="streamable-http")
+    import uvicorn
+
+    app = mcp_server.streamable_http_app()
+    app.add_middleware(BearerAuthMiddleware)
+
+    auth_status = "enabled (token required)" if AUTH_TOKEN else "DISABLED (no ARCTAN_MCP_TOKEN set)"
+    print(f"Starting Arctan MCP server on port {PORT}... Auth: {auth_status}")
+
+    uvicorn.run(app, host="0.0.0.0", port=PORT)

@@ -644,6 +644,94 @@ EOF
 
 ---
 
+## 3.5 Connect to Arctan MCP Server (All Tools — 2 minutes)
+
+This is the single biggest bridge between your local coding sessions and Arctan's shared infrastructure. We run an MCP server on our EC2 that exposes Plane, ClickHouse, AWS, and codebase knowledge directly into your coding tool.
+
+**What this gives you inside Claude Code / OpenCode / Zed:**
+- "What urgent issues are assigned to me in Engineering?" → queries Plane live
+- "How many users had packet loss > 5% this week?" → runs SQL on ClickHouse
+- "What's running on our ECS cluster?" → queries AWS
+- "How does the PeerDB sync work?" → searches codebase docs
+
+No browser, no tab switching, no copy-pasting from Hermes. It's all inside your coding session.
+
+**Auth token required.** Ask your admin for the MCP token. It goes in the config below as `<MCP_TOKEN>`.
+
+### Claude Code (iTerm2)
+
+Add to `~/.claude.json` (create if it doesn't exist):
+
+```json
+{
+  "mcpServers": {
+    "arctan": {
+      "type": "url",
+      "url": "http://43.204.147.51:8643/mcp",
+      "headers": {
+        "Authorization": "Bearer <MCP_TOKEN>"
+      }
+    }
+  }
+}
+```
+
+Restart Claude Code. You'll see the Arctan tools available. Try:
+```
+"Use the plane_query tool to show me urgent issues in Engineering"
+```
+
+### OpenCode (Ghostty)
+
+Add to your `opencode.toml` or `~/.config/opencode/config.toml`:
+
+```toml
+[mcp.arctan]
+url = "http://43.204.147.51:8643/mcp"
+headers = { Authorization = "Bearer <MCP_TOKEN>" }
+```
+
+### Zed
+
+Add to `~/.config/zed/settings.json`:
+
+```json
+{
+  "context_servers": {
+    "arctan": {
+      "settings": {
+        "url": "http://43.204.147.51:8643/mcp",
+        "headers": {
+          "Authorization": "Bearer <MCP_TOKEN>"
+        }
+      }
+    }
+  }
+}
+```
+
+### VS Code + Copilot
+
+VS Code Copilot doesn't support custom MCP servers natively yet. Two options:
+- Use Hermes at [chat.getarctan.com](https://chat.getarctan.com) for Plane/ClickHouse/AWS queries
+- Install the **Cline** VS Code extension (supports MCP + your Claude API key)
+
+### Tools Available via MCP
+
+Once connected, these tools appear in your coding session:
+
+| Tool | What it does | Example |
+|------|-------------|---------|
+| `plane_query` | Query Plane projects, issues, cycles, members | "Show my open issues in Engineering" |
+| `plane_update` | Create issues, update status, add comments | "Create a bug for the crackling issue" |
+| `clickhouse_query` | Read-only SQL on analytics (88M+ metrics) | "Average model latency last 24h by user" |
+| `aws_query` | Read-only AWS infra queries | "What ECS services are running?" |
+| `codebase_knowledge` | Search Arctan's indexed repo docs | "How does the audio pipeline work?" |
+
+**This means:** You can be debugging a latency issue in `inference-server`, ask "what's the p95 model latency this week?", get the answer from ClickHouse, and create a Plane issue — all without leaving your terminal.
+
+---
+
 # Summary: What Goes Where
 
 ### On your machine (personal, Layer 3)
@@ -651,10 +739,11 @@ EOF
 | File | Tool | Content |
 |------|------|---------|
 | `~/.claude/CLAUDE.md` | Claude Code | Your role, preferences, Arctan stack |
+| `~/.claude.json` (mcpServers) | Claude Code | MCP connection to Arctan server |
 | `~/.config/opencode/context.md` | OpenCode | Your role, preferences, stack |
-| `~/.config/opencode/config.toml` | OpenCode | Cheap summarizer model |
+| `~/.config/opencode/config.toml` | OpenCode | Cheap summarizer + MCP config |
 | `~/.config/zed/rules.md` | Zed | Your coding style, stack |
-| `~/.config/zed/settings.json` | Zed | Tab context → "pinned" |
+| `~/.config/zed/settings.json` | Zed | Tab context "pinned" + MCP config |
 | GitHub Settings → Copilot Memory | VS Code | Toggle on (web UI) |
 
 ### In each repo (shared, Layer 2)
@@ -671,6 +760,7 @@ EOF
 | System | Purpose |
 |--------|---------|
 | Hermes at chat.getarctan.com | Shared AI for data/PM/research (no personal tokens) |
+| Arctan MCP server (port 8643) | Plane + ClickHouse + AWS + docs inside coding tools |
 | AGENTS.md convention | Standard context file across all repos |
 
 ---
@@ -841,7 +931,15 @@ The shared AI assistant — query data, manage Plane, search the web, ask about 
   ```
 - [ ] **Habit:** use `@file` for specific files, `@thread` to reference past conversations. New thread per topic.
 
-### 3. Pull Latest on Your Repos
+### 3. Connect to Arctan MCP Server (2 minutes)
+
+This gives your coding tool direct access to Plane, ClickHouse, AWS, and codebase docs. See [Section 3.5](#35-connect-to-arctan-mcp-server-all-tools--2-minutes) for your tool's config.
+
+- [ ] Get the MCP token from your admin
+- [ ] Add the MCP server config to your tool (Claude Code / OpenCode / Zed — see Section 3.5)
+- [ ] Restart your tool and verify: ask "list Plane projects" — it should return 6 projects
+
+### 4. Pull Latest on Your Repos
 
 The admin has pushed AGENTS.md and other context files to all repos. Pull them:
 
@@ -852,7 +950,7 @@ ls AGENTS.md    # should exist now
 
 Once pulled, every AI tool reads these files automatically. No action needed from you.
 
-### 4. Verify It's Working
+### 5. Verify It's Working
 
 Start a new Claude session on any Arctan project. It should:
 
@@ -866,7 +964,7 @@ If Claude seems lost:
 3. For Claude Code: did you run `/memory` in a previous session?
 4. Ask Hermes: "My AI tool isn't picking up context files, help me debug"
 
-### 5. Ongoing Habits
+### 6. Ongoing Habits
 
 These take zero extra time but compound into big savings:
 
