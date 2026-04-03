@@ -467,6 +467,10 @@ class GatewayRunner:
         # Key: session_key, Value: model string (e.g. "anthropic/claude-sonnet-4.5")
         self._session_model_overrides: Dict[str, str] = {}
 
+        # Base workspace path for per-session workspace isolation.
+        # Each session gets a subdirectory under this path.
+        self._workspace_base_path = os.getenv("TERMINAL_CWD", str(Path.home()))
+
         # Track pending exec approvals per session
         # Key: session_key, Value: {"command": str, "pattern_key": str, ...}
         self._pending_approvals: Dict[str, Dict[str, Any]] = {}
@@ -3010,6 +3014,18 @@ class GatewayRunner:
         self._shutdown_gateway_honcho(session_key)
         self._evict_cached_agent(session_key)
         self._session_model_overrides.pop(session_key, None)
+
+        # Clean up per-session workspace directory
+        if session_key and hasattr(self, '_workspace_base_path') and self._workspace_base_path:
+            import hashlib as _wh_reset, shutil as _sh_reset
+            _ws_hash = _wh_reset.sha256(session_key.encode()).hexdigest()[:12]
+            _ws_dir = Path(self._workspace_base_path) / _ws_hash
+            if _ws_dir.exists() and _ws_dir != Path(self._workspace_base_path):
+                try:
+                    _sh_reset.rmtree(_ws_dir)
+                    logger.info("Cleaned up workspace %s for session reset", _ws_dir.name)
+                except Exception as _ws_err:
+                    logger.warning("Failed to clean workspace %s: %s", _ws_dir.name, _ws_err)
         
         # Reset the session
         new_entry = self.session_store.reset_session(session_key)
@@ -5106,6 +5122,9 @@ class GatewayRunner:
         for var in ["HERMES_SESSION_PLATFORM", "HERMES_SESSION_CHAT_ID", "HERMES_SESSION_CHAT_NAME", "HERMES_SESSION_THREAD_ID"]:
             if var in os.environ:
                 del os.environ[var]
+        # Restore TERMINAL_CWD to the base workspace (undo per-session override)
+        if hasattr(self, '_workspace_base_path') and self._workspace_base_path:
+            os.environ["TERMINAL_CWD"] = self._workspace_base_path
     
     async def _enrich_message_with_vision(
         self,
@@ -5754,6 +5773,19 @@ class GatewayRunner:
                     logger.debug("Could not set up stream consumer: %s", _sc_err)
 
             turn_route = self._resolve_turn_agent_config(message, model, runtime_kwargs)
+
+            # ── Per-session workspace isolation ──────────────────────────
+            # Create a unique workspace directory for this session so
+            # concurrent Slack/Open WebUI users don't clobber each other's
+            # git clones, builds, and temp files.
+            _workspace_base = Path(os.getenv("TERMINAL_CWD", str(Path.home())))
+            _session_workspace = None
+            if session_key:
+                import hashlib as _wh
+                _session_hash = _wh.sha256(session_key.encode()).hexdigest()[:12]
+                _session_workspace = _workspace_base / _session_hash
+                _session_workspace.mkdir(parents=True, exist_ok=True)
+                os.environ["TERMINAL_CWD"] = str(_session_workspace)
 
             # Check agent cache — reuse the AIAgent from the previous message
             # in this session to preserve the frozen system prompt and tool
