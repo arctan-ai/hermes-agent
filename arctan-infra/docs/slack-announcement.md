@@ -18,7 +18,7 @@ It knows. It's read every repo, every doc, every config.
 
 ---
 
-:rocket: *Getting started takes 2 minutes:*
+:rocket: *Get started now (2 minutes):*
 
 *1.* Go to <https://chat.getarctan.com|chat.getarctan.com> → sign in with your *@arctan.ai* Google account
 *2.* Pick a model from the dropdown (start with *Sonnet 4.6* for everyday use)
@@ -38,17 +38,21 @@ That's it. You're in.
 
 ---
 
-:wrench: *One more thing — your local AI tools just got smarter too.*
-
-We've pushed context files (`AGENTS.md`, `.github/copilot-instructions.md`, `.zed/rules.md`) to all 11 repos. Just `git pull` on your projects — Claude Code, OpenCode, Zed, and VS Code Copilot will automatically pick them up. No more spending the first 5 minutes of every session re-explaining what Arctan is.
-
----
-
 :zap: *Model cheat sheet:*
 • *Haiku 4.5* — instant answers, quick lookups
 • *Sonnet 4.5 / 4.6* — everyday workhorse (start here)
 • *Opus 4.5 / 4.6* — deep reasoning, architecture decisions, complex debugging
 
-:book: Full guide: <https://chat.getarctan.com|ask Hermes> _"Show me the onboarding guide"_ — or check `arctan-infra/docs/onboarding-guide.md`
+---
 
-Questions? Just ask Hermes. Seriously — that's what it's for. :slightly_smiling_face:
+:books: *What to read next:*
+
+This announcement is *Step 1* — now you know what Hermes is and how to get in.
+
+:one: *<https://chat.getarctan.com|Step 2: Onboarding Guide>* (`arctan-infra/docs/onboarding-guide.md`)
+Everything you can do with Hermes — real examples for Engineering, Data Science, Business, and Infra. Slack commands, access levels, tips for better results. Read this first.
+
+:two: *Step 3: Context Efficiency Guide* (`arctan-infra/docs/token-savings-guide.md`)
+Optimize your *local* AI tools (Claude Code, OpenCode, Zed, VS Code). We've already pushed context files to all 11 repos — this guide covers how to configure your personal setup so every AI session starts smart from the first message. Read this after you've used Hermes for a day or two.
+
+Questions? Just ask Hermes — seriously, that's what it's for. :slightly_smiling_face:

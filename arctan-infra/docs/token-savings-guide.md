@@ -1,5 +1,7 @@
 # 🧠 Arctan AI Context Efficiency Guide
 
+> **Step 3 of 3** · You've used [Hermes](https://chat.getarctan.com) and read the [Onboarding Guide](onboarding-guide.md). Now optimize your local AI tools so every session starts smart.
+>
 > **Eliminate redundant context rebuilding across every AI tool. Three layers: organization, repository, developer.**
 
 Every time someone at Arctan starts a new Claude session, Claude re-discovers the same things — it's a Tauri app, the audio pipeline is `cpal → DeepFilterNet → Beatrice → cpal`, we use Jotai not Redux, `db-service` uses `master` not `main`. Every session, every person, every day.
@@ -948,4 +950,4 @@ These take zero extra time but compound into big savings:
 
 ---
 
-*Last updated: April 3, 2026 · Questions? Ask Hermes at [chat.getarctan.com](https://chat.getarctan.com) or DM @hermesbot on Slack.*
+*Step 3 of 3 · Last updated: April 3, 2026 · Questions? Ask Hermes at [chat.getarctan.com](https://chat.getarctan.com) or DM @hermesbot on Slack.*

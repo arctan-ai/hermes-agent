@@ -1,6 +1,6 @@
 # 🎧 Arctan AI Workflow Guide
 
-> We've connected an AI assistant to our Plane boards, analytics database, AWS infrastructure, and all 11 repos. Here's how to use it to streamline your workflow across every part of our stack.
+> **Step 2 of 3** · You've seen the [Slack announcement](#) — now here's everything you can do with Hermes and how to get the most out of it. After this, move on to the [Context Efficiency Guide](token-savings-guide.md) to optimize your local AI tools.
 
 ---
 
@@ -17,13 +17,12 @@
 
 **Part 2: Your Individual AI Tools**
 8. [How Hermes Fits With Your Coding Tools](#8-how-hermes-fits-with-your-coding-tools)
-9. [Optimizing Your AI Tools: Per-Tool Setup](#9-optimizing-your-ai-tools)
-10. [The Shared Context File: AGENTS.md](#10-the-shared-context-file)
+9. [The Shared Context Files (Already Done)](#9-the-shared-context-files)
 
 **Part 3: Reference**
-11. [Tips for Better Results](#11-tips-for-better-results)
-12. [Privacy, Memory & Data](#12-privacy-memory--data)
-13. [FAQ](#13-faq)
+10. [Tips for Better Results](#10-tips-for-better-results)
+11. [Privacy, Memory & Data](#11-privacy-memory--data)
+12. [FAQ](#12-faq)
 
 ---
 
@@ -366,45 +365,15 @@ You already use AI for coding. Here's how Hermes complements — not replaces �
 
 ---
 
-## 9. Optimizing Your AI Tools
+## 9. The Shared Context Files (Already Done)
 
-Every time you start a new session in Claude Code, OpenCode, Zed, or VS Code, Claude rebuilds context from scratch. That's ~50,000 tokens per session just getting oriented.
+We've pushed AI context files to all 11 Arctan repos:
 
-**The fix takes 5-10 minutes and eliminates redundant context rebuilding.**
-
-We have a detailed per-tool guide:
-
-👉 **[Token Savings Guide](token-savings-guide.md)**
-
-Quick summary of what to do for each tool:
-
-### VS Code + Copilot
-1. Enable **Copilot Memory** in GitHub Settings → Copilot → Features
-2. Create `.github/copilot-instructions.md` in each repo with project context
-3. Set tab context to "pinned" or "none" to avoid sending all open files
-
-### Claude Code (iTerm2)
-1. Create `~/.claude/CLAUDE.md` with your global preferences
-2. Run `/memory` at the end of each session (2 seconds, saves thousands of tokens next time)
-3. Optional: install **claude-mem** plugin for fully automatic memory
-
-### OpenCode (Ghostty)
-1. Create `~/.config/opencode/context.md` with your global preferences
-2. Add a cheap summarizer model (Haiku) to your config for context compression
-3. Use `/compact` to shrink long conversations
-
-### Zed
-1. Create `~/.config/zed/rules.md` with your global preferences
-2. Change tab context to `"pinned"` in settings (stop sending all open tabs)
-3. Use `@thread` to reference previous conversations instead of re-explaining
-
----
-
-## 10. The Shared Context File
-
-**`AGENTS.md` is deployed to all 11 Arctan repos.** It's a context file in the root of each repo that every AI tool reads automatically — Claude Code, OpenCode, Zed, and Copilot all support it. It tells the AI about the project's architecture, conventions, and gotchas.
-
-Additionally, `.github/copilot-instructions.md` and `.zed/rules.md` have been pushed to all 11 repos.
+| File | Read by | Purpose |
+|------|---------|---------|
+| `AGENTS.md` | Claude Code, OpenCode, Zed, Copilot | Project architecture, conventions, gotchas |
+| `.github/copilot-instructions.md` | VS Code + Copilot | IDE-specific coding context |
+| `.zed/rules.md` | Zed | Editor-specific rules |
 
 **To get them:** Just pull latest on any repo:
 ```bash
@@ -412,15 +381,15 @@ cd ~/your-project && git pull
 ls AGENTS.md    # should exist
 ```
 
-Every AI tool reads these files automatically. No manual setup needed — just pull and go.
+Every AI tool reads these files automatically. No manual setup needed — just pull and go. The next time you start a Claude Code or OpenCode session on any Arctan repo, it will already know what the project is, what stack it uses, and what conventions to follow — without spending 5 minutes reading random files.
 
-**Impact:** One 500-token file replaces 10,000-50,000 tokens of Claude re-discovering your project structure by reading random files. That's a 95% reduction in context setup overhead.
+**Want to go further?** The 👉 **[Context Efficiency Guide](token-savings-guide.md)** (Step 3) covers personal tool configuration — global preferences for Claude Code, OpenCode, Zed, and VS Code that make every session even faster. Do this after you've used Hermes for a day or two.
 
 ---
 
 # Part 3: Reference
 
-## 11. Tips for Better Results
+## 10. Tips for Better Results
 
 ### Be specific
 ```
@@ -457,7 +426,7 @@ It remembers the conversation:
 
 ---
 
-## 12. Privacy, Memory & Data
+## 11. Privacy, Memory & Data
 
 **Your conversations are private.** No one else can see your chat history or what the AI remembers about you.
 
@@ -471,7 +440,7 @@ It remembers the conversation:
 
 ---
 
-## 13. FAQ
+## 12. FAQ
 
 **Q: How is this different from ChatGPT or Claude.ai?**
 It's connected to our internal systems. ChatGPT can't query our ClickHouse database or create Plane issues. Hermes can, because we've built custom tools that integrate with our actual infrastructure.
@@ -513,4 +482,12 @@ Just ask it: "What can you help me with?" — it'll list its capabilities. Or tr
 
 ---
 
-*Last updated: April 3, 2026 · Powered by Hermes Agent + Claude (Opus, Sonnet, Haiku) via OpenRouter*
+---
+
+## Next Step
+
+Ready to optimize your local AI tools? Head to the 👉 **[Context Efficiency Guide](token-savings-guide.md)** — it covers personal configuration for Claude Code, OpenCode, Zed, and VS Code so every coding session starts with full project context from the first message.
+
+---
+
+*Step 2 of 3 · Last updated: April 3, 2026 · Powered by Hermes Agent + Claude (Opus, Sonnet, Haiku)*
