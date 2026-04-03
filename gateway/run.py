@@ -463,6 +463,10 @@ class GatewayRunner:
         self._effective_model: Optional[str] = None
         self._effective_provider: Optional[str] = None
 
+        # Per-session model overrides via /model command.
+        # Key: session_key, Value: model string (e.g. "anthropic/claude-sonnet-4.5")
+        self._session_model_overrides: Dict[str, str] = {}
+
         # Track pending exec approvals per session
         # Key: session_key, Value: {"command": str, "pattern_key": str, ...}
         self._pending_approvals: Dict[str, Dict[str, Any]] = {}
@@ -1907,6 +1911,9 @@ class GatewayRunner:
         if canonical == "yolo":
             return await self._handle_yolo_command(event)
 
+        if canonical == "model":
+            return await self._handle_model_command(event)
+
         if canonical == "provider":
             return await self._handle_provider_command(event)
         
@@ -3002,6 +3009,7 @@ class GatewayRunner:
 
         self._shutdown_gateway_honcho(session_key)
         self._evict_cached_agent(session_key)
+        self._session_model_overrides.pop(session_key, None)
         
         # Reset the session
         new_entry = self.session_store.reset_session(session_key)
@@ -3197,6 +3205,88 @@ class GatewayRunner:
             lines.append(f"_(Requested page {requested_page} was out of range, showing page {page}.)_")
         return "\n".join(lines)
     
+    async def _handle_model_command(self, event: MessageEvent) -> str:
+        """Handle /model command — show or switch the model for this session."""
+        args = event.get_command_args().strip()
+        source = event.source
+
+        # Load configured models from config.yaml
+        try:
+            user_config = _load_gateway_config()
+            configured_models = user_config.get("api_server_models", [])
+        except Exception:
+            configured_models = []
+
+        # Build lookup: id -> model string
+        model_map = {}
+        for entry in configured_models:
+            if isinstance(entry, dict) and entry.get("id"):
+                model_map[entry["id"]] = {
+                    "model": entry.get("model", entry["id"]),
+                    "name": entry.get("name", entry["id"]),
+                }
+
+        # Current session key
+        session_entry = self.session_store.get_or_create_session(source)
+        session_key = session_entry.session_key
+
+        current_default = _resolve_gateway_model()
+        current_override = self._session_model_overrides.get(session_key)
+        active_model = current_override or current_default
+
+        if not args:
+            # Show current model + available models
+            lines = ["🤖 **Model Selection**\n"]
+            lines.append(f"Active: `{active_model}`")
+            if current_override:
+                lines.append(f"Default: `{current_default}` (overridden for this session)")
+            lines.append("")
+
+            if model_map:
+                lines.append("**Available models:**")
+                for mid, info in model_map.items():
+                    marker = " ← active" if info["model"] == active_model else ""
+                    lines.append(f"  • `{mid}` — {info['name']}{marker}")
+            else:
+                lines.append("_No models configured in `api_server_models` in config.yaml_")
+
+            lines.append("")
+            lines.append("Usage: `/model <name>` to switch, `/model reset` to restore default")
+            return "\n".join(lines)
+
+        # Reset to default
+        if args.lower() in ("reset", "default", "none"):
+            if session_key in self._session_model_overrides:
+                del self._session_model_overrides[session_key]
+            # Evict cached agent so next message uses the new model
+            self._evict_cached_agent(session_key)
+            return f"🤖 Model reset to default: `{current_default}`\n_(takes effect on next message)_"
+
+        # Try to match against configured model IDs (case-insensitive)
+        requested = args.strip()
+        matched = None
+        for mid, info in model_map.items():
+            if mid.lower() == requested.lower():
+                matched = info
+                break
+
+        if matched:
+            new_model = matched["model"]
+            new_name = matched["name"]
+        else:
+            # Allow raw model strings (e.g. "anthropic/claude-sonnet-4.5")
+            # Add anthropic/ prefix for bare Claude model names
+            if requested.startswith("claude") and "/" not in requested:
+                new_model = f"anthropic/{requested}"
+            else:
+                new_model = requested
+            new_name = requested
+
+        self._session_model_overrides[session_key] = new_model
+        # Evict cached agent so next message uses the new model
+        self._evict_cached_agent(session_key)
+        return f"🤖 Model switched to **{new_name}** (`{new_model}`)\n_(takes effect on next message)_"
+
     async def _handle_provider_command(self, event: MessageEvent) -> str:
         """Handle /provider command - show available providers."""
         import yaml
@@ -5610,6 +5700,15 @@ class GatewayRunner:
                 pass
 
             model = _resolve_gateway_model(user_config)
+
+            # Apply per-session model override from /model command
+            if session_key and session_key in self._session_model_overrides:
+                model = self._session_model_overrides[session_key]
+                # Ensure bare Claude names get the anthropic/ prefix
+                if model.startswith("claude") and "/" not in model:
+                    model = f"anthropic/{model}"
+                    self._session_model_overrides[session_key] = model
+                logger.info("Using per-session model override for %s: %s", session_key, model)
 
             try:
                 runtime_kwargs = _resolve_runtime_agent_kwargs()

@@ -296,6 +296,7 @@ class APIServerAdapter(BasePlatformAdapter):
         self._cors_origins: tuple[str, ...] = self._parse_cors_origins(
             extra.get("cors_origins", os.getenv("API_SERVER_CORS_ORIGINS", "")),
         )
+        self._configured_models: list[dict] = self._load_configured_models()
         self._app: Optional["web.Application"] = None
         self._runner: Optional["web.AppRunner"] = None
         self._site: Optional["web.TCPSite"] = None
@@ -346,6 +347,52 @@ class APIServerAdapter(BasePlatformAdapter):
             return False
 
         return "*" in self._cors_origins or origin in self._cors_origins
+
+    # ------------------------------------------------------------------
+    # Model selection helpers
+    # ------------------------------------------------------------------
+
+    @staticmethod
+    def _load_configured_models() -> list[dict]:
+        """Load api_server_models from config.yaml.
+
+        Returns a list of dicts with keys: id, model, name.
+        Falls back to a single 'hermes-agent' entry if not configured.
+        """
+        try:
+            from gateway.run import _load_gateway_config
+            cfg = _load_gateway_config()
+            models = cfg.get("api_server_models", [])
+            if models and isinstance(models, list):
+                result = []
+                for entry in models:
+                    if isinstance(entry, dict) and entry.get("id"):
+                        result.append({
+                            "id": entry["id"],
+                            "model": entry.get("model", entry["id"]),
+                            "name": entry.get("name", entry["id"]),
+                        })
+                if result:
+                    return result
+        except Exception:
+            pass
+        return [{"id": "hermes-agent", "model": "", "name": "Hermes Agent"}]
+
+    def _resolve_model_for_request(self, requested_model: str) -> str:
+        """Map a requested model ID to the actual provider model string.
+
+        If the requested model matches a configured api_server_models entry,
+        return its 'model' value. Otherwise return the default from config.
+        """
+        if not requested_model or requested_model == "hermes-agent":
+            return ""  # empty = use default from config.yaml
+
+        for entry in self._configured_models:
+            if entry["id"] == requested_model:
+                return entry["model"]
+
+        # If not in configured list, pass through as-is (allows ad-hoc models)
+        return requested_model
 
     # ------------------------------------------------------------------
     # Auth helper
@@ -401,6 +448,7 @@ class APIServerAdapter(BasePlatformAdapter):
         user_id: Optional[str] = None,
         user_role: Optional[str] = None,
         user_email: Optional[str] = None,
+        model_override: Optional[str] = None,
     ) -> Any:
         """
         Create an AIAgent instance using the gateway's runtime config.
@@ -418,7 +466,8 @@ class APIServerAdapter(BasePlatformAdapter):
         from hermes_cli.tools_config import _get_platform_tools
 
         runtime_kwargs = _resolve_runtime_agent_kwargs()
-        model = _resolve_gateway_model()
+        model = model_override if model_override else _resolve_gateway_model()
+        logger.info("Creating agent with model=%s (override=%s)", model, model_override)
 
         user_config = _load_gateway_config()
         platform_toolsets = sorted(_get_platform_tools(user_config, "api_server"))
@@ -478,24 +527,27 @@ class APIServerAdapter(BasePlatformAdapter):
         return web.json_response({"status": "ok", "platform": "hermes-agent"})
 
     async def _handle_models(self, request: "web.Request") -> "web.Response":
-        """GET /v1/models — return hermes-agent as an available model."""
+        """GET /v1/models — return all configured models."""
         auth_err = self._check_auth(request)
         if auth_err:
             return auth_err
 
+        now = int(time.time())
+        model_data = []
+        for entry in self._configured_models:
+            model_data.append({
+                "id": entry["id"],
+                "object": "model",
+                "created": now,
+                "owned_by": "hermes",
+                "permission": [],
+                "root": entry.get("model", entry["id"]),
+                "parent": None,
+            })
+
         return web.json_response({
             "object": "list",
-            "data": [
-                {
-                    "id": "hermes-agent",
-                    "object": "model",
-                    "created": int(time.time()),
-                    "owned_by": "hermes",
-                    "permission": [],
-                    "root": "hermes-agent",
-                    "parent": None,
-                }
-            ],
+            "data": model_data,
         })
 
     async def _handle_chat_completions(self, request: "web.Request") -> "web.Response":
@@ -602,6 +654,8 @@ class APIServerAdapter(BasePlatformAdapter):
 
         completion_id = f"chatcmpl-{uuid.uuid4().hex[:29]}"
         model_name = body.get("model", "hermes-agent")
+        resolved_model = self._resolve_model_for_request(model_name)
+        logger.info("Chat completion request: requested_model=%s resolved_model=%s", model_name, resolved_model or "(default)")
         created = int(time.time())
 
         if stream:
@@ -644,6 +698,7 @@ class APIServerAdapter(BasePlatformAdapter):
                 user_id=owui_user_id or None,
                 user_role=owui_user_role or None,
                 user_email=owui_user_email or None,
+                model_override=resolved_model or None,
             ))
 
             return await self._write_sse_chat_completion(
@@ -663,6 +718,7 @@ class APIServerAdapter(BasePlatformAdapter):
                 user_id=owui_user_id or None,
                 user_role=owui_user_role or None,
                 user_email=owui_user_email or None,
+                model_override=resolved_model or None,
             )
 
         idempotency_key = request.headers.get("Idempotency-Key")
@@ -936,6 +992,8 @@ class APIServerAdapter(BasePlatformAdapter):
 
         # Run the agent (with Idempotency-Key support)
         session_id = str(uuid.uuid4())
+        resp_model_name = body.get("model", "hermes-agent")
+        resp_resolved_model = self._resolve_model_for_request(resp_model_name)
 
         async def _compute_response():
             return await self._run_agent(
@@ -948,6 +1006,7 @@ class APIServerAdapter(BasePlatformAdapter):
                 user_id=owui_user_id_r or None,
                 user_role=owui_user_role_r or None,
                 user_email=owui_user_email_r or None,
+                model_override=resp_resolved_model or None,
             )
 
         idempotency_key = request.headers.get("Idempotency-Key")
@@ -1362,6 +1421,7 @@ class APIServerAdapter(BasePlatformAdapter):
         user_id: Optional[str] = None,
         user_role: Optional[str] = None,
         user_email: Optional[str] = None,
+        model_override: Optional[str] = None,
     ) -> tuple:
         """
         Create an agent and run a conversation in a thread executor.
@@ -1387,6 +1447,7 @@ class APIServerAdapter(BasePlatformAdapter):
                 user_id=user_id,
                 user_role=user_role,
                 user_email=user_email,
+                model_override=model_override,
             )
             if agent_ref is not None:
                 agent_ref[0] = agent
