@@ -1,6 +1,6 @@
 # 🎧 Arctan AI Workflow Guide
 
-> We've connected an AI assistant to our Plane boards, analytics database, AWS infrastructure, and all 12 repos. Here's how to use it — and how to stop wasting money on your individual Claude sessions.
+> We've connected an AI assistant to our Plane boards, analytics database, AWS infrastructure, and all 11 repos. Here's how to use it to streamline your workflow across every part of our stack.
 
 ---
 
@@ -17,14 +17,13 @@
 
 **Part 2: Your Individual AI Tools**
 8. [How Hermes Fits With Your Coding Tools](#8-how-hermes-fits-with-your-coding-tools)
-9. [Stop Wasting Tokens: Per-Tool Setup](#9-stop-wasting-tokens)
+9. [Optimizing Your AI Tools: Per-Tool Setup](#9-optimizing-your-ai-tools)
 10. [The Shared Context File: AGENTS.md](#10-the-shared-context-file)
 
 **Part 3: Reference**
 11. [Tips for Better Results](#11-tips-for-better-results)
 12. [Privacy, Memory & Data](#12-privacy-memory--data)
-13. [Cost Breakdown](#13-cost-breakdown)
-14. [FAQ](#14-faq)
+13. [FAQ](#13-faq)
 
 ---
 
@@ -39,7 +38,7 @@ We deployed an AI assistant called **Hermes** that every Arctan team member can 
 | **Plane** (all 6 projects) | Query issues, create new issues, update status, add comments |
 | **ClickHouse** (88M+ metrics) | Run SQL queries on user activity, call data, performance metrics |
 | **AWS** (production-cluster) | Check ECS services, EC2 instances, security groups (read-only) |
-| **All 12 repos** | Answer questions about architecture, conventions, known bugs |
+| **All 11 repos** | Answer questions about architecture, conventions, known bugs |
 | **Web** | Search, browse sites, read documentation, summarize articles |
 
 It also has **persistent memory** — it remembers who you are, what you work on, and your preferences across sessions. Each person's memory is private and isolated.
@@ -58,8 +57,18 @@ It also has **persistent memory** — it remembers who you are, what you work on
 ### Step 2: Click "Sign in with Google"
 Use your **@arctan.ai** account. Personal Gmail won't work.
 
-### Step 3: Pick the model
-Select **hermes-agent** from the dropdown at the top. It should be the only model available.
+### Step 3: Pick a model
+Select a model from the dropdown at the top. Five Claude models are available:
+
+| Model | Best For |
+|-------|----------|
+| **Claude Opus 4.6** | Complex reasoning, architecture decisions, multi-step analysis |
+| **Claude Opus 4.5** | Deep thinking tasks, nuanced code review |
+| **Claude Sonnet 4.6** | Everyday tasks — queries, issue management, research (recommended default) |
+| **Claude Sonnet 4.5** | General-purpose, good balance of speed and quality |
+| **Claude Haiku 4.5** | Quick lookups, simple questions, fast responses |
+
+**Start with Sonnet 4.6** for most tasks. Switch to Opus when you need deeper reasoning or Haiku when you need a fast answer.
 
 ### Step 4: Say hello
 Type something like:
@@ -217,8 +226,8 @@ You: "What ECS services are running in production? Show task status"
 
 Hermes: [Queries AWS]
   production-cluster:
-    production-clickhouse:  1/1 running (FARGATE, 2 vCPU, 4GB)
-    production-peerdb:      1/1 running (FARGATE)
+    production-clickhouse:  1/1 running (EC2, ECS managed, EBS gp3 100GB)
+    production-peerdb:      1/1 running (EC2, ECS managed)
 ```
 
 ```
@@ -266,7 +275,7 @@ Infrastructure
 - **Audio pipeline analysis** — crackling root causes, ring buffer optimizations
 - **Audio driver caveats** — Code 10 errors, buffer sizing, HLK testing
 - **PeerDB CDC setup** — how Postgres data flows to ClickHouse
-- **AGENTS.md** — coding standards for arctan-client
+- **AGENTS.md** — coding standards deployed across all 11 repos
 
 ### Database Schema (ClickHouse)
 
@@ -305,6 +314,11 @@ Hermes is also **@hermesbot** in Slack.
 
 Same capabilities, same access level. Use whichever is faster — the browser chat or Slack.
 
+**Switch models per-session** with the `/model` command:
+> `/model sonnet` — switch to Sonnet for everyday tasks
+> `/model opus` — switch to Opus for complex reasoning
+> `/model haiku` — switch to Haiku for quick lookups
+
 ---
 
 ## 7. Access Levels & Permissions
@@ -340,7 +354,7 @@ You already use AI for coding. Here's how Hermes complements — not replaces �
 |------|-----------|---------------------|
 | "How many active users this week?" | ✅ queries ClickHouse | ❌ can't access our DB |
 | "Create an issue in Plane" | ✅ creates it directly | ❌ you'd do it manually |
-| "How does the auth-service work?" | ✅ knows all 12 repos | ⚠️ only knows open files |
+| "How does the auth-service work?" | ✅ knows all 11 repos | ⚠️ only knows open files |
 | "Refactor this Rust function" | ❌ can't edit your files | ✅ edits in your IDE |
 | "Debug this stack trace" | ❌ can't run your code | ✅ runs locally |
 | "Find a WebRTC library" | ✅ searches + browses web | ⚠️ limited in most tools |
@@ -352,11 +366,11 @@ You already use AI for coding. Here's how Hermes complements — not replaces �
 
 ---
 
-## 9. Stop Wasting Tokens
+## 9. Optimizing Your AI Tools
 
-Every time you start a new session in Claude Code, OpenCode, Zed, or VS Code, Claude rebuilds context from scratch. That's ~50,000 tokens wasted per session just getting oriented.
+Every time you start a new session in Claude Code, OpenCode, Zed, or VS Code, Claude rebuilds context from scratch. That's ~50,000 tokens per session just getting oriented.
 
-**The fix takes 5-10 minutes and saves $50-160/person/month.**
+**The fix takes 5-10 minutes and eliminates redundant context rebuilding.**
 
 We have a detailed per-tool guide:
 
@@ -388,37 +402,19 @@ Quick summary of what to do for each tool:
 
 ## 10. The Shared Context File
 
-**This is the single highest-impact thing the team can do together.**
+**`AGENTS.md` is deployed to all 11 Arctan repos.** It's a context file in the root of each repo that every AI tool reads automatically — Claude Code, OpenCode, Zed, and Copilot all support it. It tells the AI about the project's architecture, conventions, and gotchas.
 
-`AGENTS.md` is a file in the root of a repo that every AI tool reads automatically — Claude Code, OpenCode, Zed, and Copilot all support it. It tells the AI about the project's architecture, conventions, and gotchas.
+Additionally, `.github/copilot-instructions.md` and `.zed/rules.md` have been pushed to all 11 repos.
 
-**arctan-client already has one.** If your repo doesn't, create one:
-
-```markdown
-# AGENTS.md
-
-## Project Overview
-[What this service does in 2-3 sentences]
-
-## Tech Stack
-[Language, framework, key libraries]
-
-## Structure
-[Key directories and what they contain]
-
-## Conventions
-[Naming, error handling, patterns]
-
-## Build & Run
-[How to build, test, run locally]
-
-## Known Gotchas
-[Things that trip people up]
+**To get them:** Just pull latest on any repo:
+```bash
+cd ~/your-project && git pull
+ls AGENTS.md    # should exist
 ```
 
-Commit it to git. Everyone who pulls gets it. Every AI tool reads it automatically.
+Every AI tool reads these files automatically. No manual setup needed — just pull and go.
 
-**Token impact:** One 500-token file replaces 10,000-50,000 tokens of Claude re-discovering your project structure by reading random files. That's a **95% reduction** in context setup cost.
+**Impact:** One 500-token file replaces 10,000-50,000 tokens of Claude re-discovering your project structure by reading random files. That's a 95% reduction in context setup overhead.
 
 ---
 
@@ -475,42 +471,7 @@ It remembers the conversation:
 
 ---
 
-## 13. Cost Breakdown
-
-### Shared Hermes Setup
-
-| Component | Monthly Cost |
-|-----------|-------------|
-| EC2 t3.large (ap-south-1) | ~$60 |
-| Claude API via OpenRouter | ~$240-480 (usage-based, 12 people) |
-| Open WebUI + Caddy + Hermes | Free (open source) |
-| **Total** | **~$300-540/mo (~$25-45/person)** |
-
-### Your Individual Coding Tools
-
-| Tool | Typical Monthly Cost |
-|------|---------------------|
-| VS Code + Copilot (Claude) | $10-39 subscription + API usage |
-| Claude Code (iTerm2) | ~$20-60 (API usage) |
-| OpenCode (Ghostty) | ~$20-60 (API usage) |
-| Zed (Claude API) | ~$20-60 (API usage) |
-
-### With Token Optimization (see [Token Savings Guide](token-savings-guide.md))
-
-| Scenario | Monthly per person | Annual team savings |
-|----------|-------------------|-------------------|
-| No optimization | $20-80 | — |
-| With AGENTS.md + tool memory | $5-20 | **$7,000-22,000** |
-
-### Why Both Are Worth It
-
-Hermes gives you capabilities no local tool can match — querying ClickHouse, managing Plane, searching AWS, accessing cross-repo knowledge. Your local tools give you hands-on coding that Hermes can't do. Together they cover everything.
-
-The shared setup pays for itself if it saves each person **15-20 minutes per week** on data lookups, issue management, or knowledge questions. At engineering rates, that's $120-200/week saved across the team.
-
----
-
-## 14. FAQ
+## 13. FAQ
 
 **Q: How is this different from ChatGPT or Claude.ai?**
 It's connected to our internal systems. ChatGPT can't query our ClickHouse database or create Plane issues. Hermes can, because we've built custom tools that integrate with our actual infrastructure.
@@ -533,8 +494,8 @@ AI can hallucinate. For data queries, ask it to show the SQL it ran — then ver
 **Q: How do I report a bug in Hermes itself?**
 Ask it: "Create a Plane issue in the ARCTAN project: '[describe the bug]'". Or message an admin directly.
 
-**Q: What model is it running?**
-Claude Opus 4.6 by Anthropic, routed through OpenRouter.
+**Q: What models are available?**
+Five Claude models by Anthropic, routed through OpenRouter: Opus 4.6, Opus 4.5, Sonnet 4.6, Sonnet 4.5, and Haiku 4.5. Pick the one that fits your task — see model selection in [Section 2](#2-get-in).
 
 **Q: I'm stuck. What should I try first?**
 Just ask it: "What can you help me with?" — it'll list its capabilities. Or try one of the examples from [Section 3](#3-day-to-day-usage).
@@ -552,4 +513,4 @@ Just ask it: "What can you help me with?" — it'll list its capabilities. Or tr
 
 ---
 
-*Last updated: April 2026 · Powered by Hermes Agent + Claude Opus 4.6*
+*Last updated: April 3, 2026 · Powered by Hermes Agent + Claude (Opus, Sonnet, Haiku) via OpenRouter*

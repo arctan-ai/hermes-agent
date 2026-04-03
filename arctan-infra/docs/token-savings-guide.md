@@ -1,20 +1,20 @@
-# 💰 Arctan AI Token Savings Guide
+# 🧠 Arctan AI Context Efficiency Guide
 
-> **Reduce org-wide Claude API costs by 60-80%. Three layers: organization, repository, developer.**
+> **Eliminate redundant context rebuilding across every AI tool. Three layers: organization, repository, developer.**
 
 Every time someone at Arctan starts a new Claude session, Claude re-discovers the same things — it's a Tauri app, the audio pipeline is `cpal → DeepFilterNet → Beatrice → cpal`, we use Jotai not Redux, `db-service` uses `master` not `main`. Every session, every person, every day.
 
-At ~50,000 tokens per context rebuild × 5 sessions/day × 12 people, that's **~$660-1,980/month wasted on re-learning**.
+At ~50,000 tokens per context rebuild × 5 sessions/day × 12 people, that's a massive amount of redundant work across the team.
 
 This guide has three layers of fixes. Each builds on the previous:
 
 | Layer | Who does it | How often | Impact |
 |-------|------------|-----------|--------|
 | [Organization](#layer-1-organization) | Admin (once) | One-time | Sets the foundation |
-| [Repository](#layer-2-repository) | Repo owner (per repo) | One-time per repo | Biggest per-token savings |
+| [Repository](#layer-2-repository) | Admin (per repo) | One-time per repo | Biggest context efficiency gain |
 | [Developer](#layer-3-developer) | Each person | One-time + habits | Personal optimization |
 
-**Combined savings: $6,900-22,700/year across the team.**
+**Combined result: every AI session starts with full project context from the first message.**
 
 ---
 
@@ -24,15 +24,15 @@ This guide has three layers of fixes. Each builds on the previous:
 
 ## 1.1 Shared AI Assistant (Already Done ✅)
 
-Hermes is deployed at [chat.getarctan.com](https://chat.getarctan.com) with Plane, ClickHouse, and AWS integrations. See the [Onboarding Guide](onboarding-guide.md) for details.
+Hermes is deployed at [chat.getarctan.com](https://chat.getarctan.com) with Plane, ClickHouse, and AWS integrations. Multiple Claude models are available — Opus 4.6, Opus 4.5, Sonnet 4.6, Sonnet 4.5, and Haiku 4.5 — selectable per session. See the [Onboarding Guide](onboarding-guide.md) for details.
 
 This eliminates tokens spent on questions like "How many active users this week?" or "What are the urgent issues in Engineering?" — Hermes answers them directly without anyone burning personal API tokens.
 
 ## 1.2 AGENTS.md Convention
 
-We're adopting `AGENTS.md` as the standard AI context file across all Arctan repos. It's read automatically by **Claude Code, OpenCode, Zed, and GitHub Copilot** — every tool our team uses.
+`AGENTS.md` is the standard AI context file across all Arctan repos. It's read automatically by **Claude Code, OpenCode, Zed, and GitHub Copilot** — every tool our team uses.
 
-**Decision:** Every Arctan repo must have an `AGENTS.md` in its root. Templates for all 12 repos are in [Layer 2](#layer-2-repository).
+**Status:** `AGENTS.md`, `.github/copilot-instructions.md`, and `.zed/rules.md` have been pushed to all 11 repos. See the [Repo Setup Progress](#repo-setup-progress) table below.
 
 ## 1.3 Branch Naming Gotcha
 
@@ -60,7 +60,7 @@ Two repos use `master` instead of `main`. This trips up Claude constantly (it as
 
 ## AGENTS.md for Every Repo
 
-Copy the one for your repo, paste it as `AGENTS.md` in the repo root, commit, push. Done.
+All repos already have `AGENTS.md` committed. Just pull latest to get it. Reference templates below for context.
 
 ---
 
@@ -357,9 +357,9 @@ semaphore/          # Ansible automation (deployment tool)
 
 ---
 
-### Copilot Instructions (for repos with VS Code users)
+### Copilot Instructions (deployed to all repos ✅)
 
-If your repo has VS Code + Copilot users, also add `.github/copilot-instructions.md`. Example for arctan-client:
+`.github/copilot-instructions.md` has been pushed to all 11 repos. Example from arctan-client:
 
 ```markdown
 # Copilot Instructions — arctan-client
@@ -379,9 +379,9 @@ Jotai for state (not Redux). Tailwind v4 + shadcn/ui. Named exports.
 yarn tauri dev | yarn tauri build (needs code signing)
 ```
 
-### Zed Rules (for repos with Zed users)
+### Zed Rules (deployed to all repos ✅)
 
-Add `.zed/rules.md` with a condensed version of AGENTS.md. Example:
+`.zed/rules.md` has been pushed to all 11 repos. Example from arctan-client:
 
 ```markdown
 # arctan-client
@@ -584,7 +584,7 @@ model = "claude-3-5-haiku-20241022"
 max_tokens = 4000
 ```
 
-Haiku costs $0.25/M tokens vs Sonnet's $3/M. **5-10x savings on long sessions.**
+Haiku is ~10x cheaper than Sonnet for summarization. **Use it for context compression in long sessions.**
 
 ### Habits
 
@@ -765,15 +765,14 @@ Once connected, these tools appear in your coding session:
 
 ---
 
-# Cost Impact
+# Context Efficiency Impact
 
-| Layer | Tokens saved/session/person | Monthly savings (12 people) |
-|-------|----------------------------|-----------------------------|
-| Layer 1 (Hermes) | Offloads non-coding queries entirely | ~$100-300 |
-| Layer 2 (Repo files) | 30,000 → 5,000 tokens/session | ~$300-900 |
-| Layer 3 (Developer) | 5,000 → 2,000 tokens/session | ~$200-600 |
-| **Combined** | **50,000 → 2,000 tokens/session** | **$636-1,896/mo** |
-| **Annual savings** | | **$6,900-22,700** |
+| Layer | Before | After |
+|-------|--------|-------|
+| Layer 1 (Hermes) | Non-coding queries burn personal tokens | Offloaded to shared assistant |
+| Layer 2 (Repo files) | ~30,000 tokens/session on discovery | ~5,000 tokens — AI reads AGENTS.md |
+| Layer 3 (Developer) | ~5,000 tokens re-explaining preferences | ~500 tokens — loaded from config |
+| **Combined** | **~50,000 tokens/session** | **~2,000 tokens/session (96% reduction)** |
 
 ---
 
@@ -796,40 +795,14 @@ Copy into a Plane issue or print out. Two checklists — one for admin, one for 
 - [ ] Share this guide (token-savings-guide.md) with the team
 - [ ] Pin both guides in a Slack channel
 
-### Repositories (Layer 2) — Add AGENTS.md to all repos
+### Repositories (Layer 2) — All Complete ✅
 
-The admin pushes AGENTS.md (and optionally copilot-instructions, .zed/rules) to every repo. Templates for all 11 repos are in [Layer 2](#layer-2-repository) above.
-
-| # | Repo | Branch | AGENTS.md | .github/copilot-instructions.md | .zed/rules.md |
-|---|------|--------|-----------|--------------------------------|---------------|
-| 1 | arctan-client | main | ✅ exists | ☐ | ☐ |
-| 2 | arctan-client-app | main | ☐ | ☐ | ☐ |
-| 3 | inference-server | main | ☐ | ☐ | ☐ |
-| 4 | console-gateway | main | ☐ | ☐ | ☐ |
-| 5 | auth-service | main | ☐ | ☐ | ☐ |
-| 6 | db-service | **master** | ☐ | ☐ | ☐ |
-| 7 | logging-service | main | ☐ | ☐ | ☐ |
-| 8 | audio-driver | main | ☐ | ☐ | ☐ |
-| 9 | livekit-gateway | main | ☐ | ☐ | ☐ |
-| 10 | client-dashboard | main | ☐ | ☐ | ☐ |
-| 11 | infra-service | **master** | ☐ | ☐ | ☐ |
-
-**Priority:** AGENTS.md is required for every repo. The other two are nice-to-have for repos where VS Code or Zed are used heavily.
-
-**Verify all repos after pushing:**
-```bash
-for repo in arctan-client arctan-client-app inference-server console-gateway \
-  auth-service db-service livekit-gateway logging-service audio-driver \
-  client-dashboard infra-service; do
-  echo -n "$repo: "
-  gh api repos/arctan-ai/$repo/contents/AGENTS.md --jq '.name' 2>/dev/null || echo "MISSING"
-done
-```
+AGENTS.md, .github/copilot-instructions.md, and .zed/rules.md have been pushed to all 11 repos. See the [Repo Setup Progress](#repo-setup-progress) table in Layer 2 for status.
 
 ### Notify Team
 
-- [ ] Send Slack message to team: "AI context files have been added to all repos. Please do your personal dev setup — takes 10 minutes. Guide: [link to this doc, Layer 3]"
-- [ ] Follow up after 1 week in standup: "Has everyone set up their AI context files?"
+- [ ] Share the onboarding guide and this guide with the team
+- [ ] Follow up after 1 week in standup: "Has everyone set up their personal AI tool config?"
 
 ### Ongoing Maintenance
 
@@ -851,7 +824,7 @@ The shared AI assistant — query data, manage Plane, search the web, ask about 
 
 - [ ] Go to **https://chat.getarctan.com**
 - [ ] Sign in with your **@arctan.ai** Google account
-- [ ] Select **hermes-agent** from the model dropdown
+- [ ] Select a model from the dropdown (Sonnet 4.6 recommended for everyday use)
 - [ ] Send: "Hi, I'm [your name], I work on [your repos/area]"
 - [ ] Hermes remembers you from now on — no need to re-introduce yourself
 
@@ -975,4 +948,4 @@ These take zero extra time but compound into big savings:
 
 ---
 
-*Questions? Ask Hermes at [chat.getarctan.com](https://chat.getarctan.com) or DM @hermesbot on Slack.*
+*Last updated: April 3, 2026 · Questions? Ask Hermes at [chat.getarctan.com](https://chat.getarctan.com) or DM @hermesbot on Slack.*
