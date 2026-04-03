@@ -417,19 +417,19 @@ Functional components, named exports. No class components.
 
 ### Repo Setup Progress
 
-| Repo | AGENTS.md | .github/copilot-instructions | .zed/rules | Owner | Status |
-|------|-----------|------------------------------|------------|-------|--------|
-| arctan-client | ✅ | ❌ | ❌ | | |
-| arctan-client-app | ❌ | ❌ | ❌ | | |
-| inference-server | ❌ | ❌ | ❌ | | |
-| console-gateway | ❌ | ❌ | ❌ | | |
-| auth-service | ❌ | ❌ | ❌ | | |
-| db-service | ❌ | ❌ | ❌ | | |
-| logging-service | ❌ | ❌ | ❌ | | |
-| audio-driver | ❌ | ❌ | ❌ | | |
-| livekit-gateway | ❌ | ❌ | ❌ | | |
-| client-dashboard | ❌ | ❌ | ❌ | | |
-| infra-service | ❌ | ❌ | ❌ | | |
+| Repo | AGENTS.md | .github/copilot-instructions | .zed/rules | Status |
+|------|-----------|------------------------------|------------|--------|
+| arctan-client | ✅ | ✅ | ✅ | Complete |
+| arctan-client-app | ✅ | ✅ | ✅ | Complete |
+| inference-server | ✅ | ✅ | ✅ | Complete |
+| console-gateway | ✅ | ✅ | ✅ | Complete |
+| auth-service | ✅ | ✅ | ✅ | Complete |
+| db-service | ✅ | ✅ | ✅ | Complete |
+| logging-service | ✅ | ✅ | ✅ | Complete |
+| audio-driver | ✅ | ✅ | ✅ | Complete |
+| livekit-gateway | ✅ | ✅ | ✅ | Complete |
+| client-dashboard | ✅ | ✅ | ✅ | Complete |
+| infra-service | ✅ | ✅ | ✅ | Complete |
 
 ---
 
