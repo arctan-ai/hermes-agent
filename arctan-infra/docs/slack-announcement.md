@@ -1,41 +1,54 @@
-:robot_face: *Hermes is live — your AI assistant that actually knows Arctan*
+:wave: *Hey team — we've shipped something that's going to change how you work day-to-day.*
 
-It's connected to our Plane boards, ClickHouse analytics (88M+ metrics), AWS infrastructure, and all 11 repos. It remembers you across sessions.
+We built an AI assistant called *Hermes* that's wired directly into our systems — Plane, ClickHouse, AWS, and all 11 repos. It's not another ChatGPT. It *knows Arctan* — the codebase, the data, the projects, and it remembers who you are.
 
----
+:point_right: *Here's what this means in practice:*
 
-:point_right: *Three things you can do right now:*
+Instead of opening ClickHouse, writing SQL, and figuring out the right table:
+> _"How many active users made calls this week, broken down by organization?"_
+Done. It writes the query, runs it, gives you the answer.
 
-*1. Chat at <https://chat.getarctan.com|chat.getarctan.com>*
-Sign in with your @arctan.ai Google account, pick a model, and start asking. Try:
-> _"How many active users made calls this week?"_
-> _"What urgent issues are open in Engineering?"_
+Instead of switching to Plane, searching, creating, filling fields:
+> _"Create an issue in Engineering: 'AGC regression on build 22631' with high priority, assign to me"_
+Created. Link back. 5 seconds.
 
-*2. Use @hermesbot right here in Slack*
-DM it or mention it in any channel:
-> _@hermesbot Show me daily active users for the last 7 days, grouped by organization_
-
-Use `/model sonnet` or `/model opus` to switch models per-session.
-
-*3. Pull latest on your repos*
-We've pushed `AGENTS.md`, `.github/copilot-instructions.md`, and `.zed/rules.md` to all 11 repos. Just `git pull` — your AI tools (Claude Code, OpenCode, Zed, Copilot) will read them automatically.
+Instead of asking around "hey does anyone know how the PeerDB sync works":
+> _"Explain how data flows from Postgres to ClickHouse through PeerDB. I'm seeing a delay."_
+It knows. It's read every repo, every doc, every config.
 
 ---
 
-:bulb: *What can Hermes do that your personal Claude can't?*
+:rocket: *Getting started takes 2 minutes:*
 
-• _"What's the p95 model latency for ICCS users this week? Compare to last week."_ → runs SQL on ClickHouse
-• _"Create an issue in Engineering: 'Investigate AGC regression on build 22631' with high priority, assign to me"_ → creates it in Plane directly
+*1.* Go to <https://chat.getarctan.com|chat.getarctan.com> → sign in with your *@arctan.ai* Google account
+*2.* Pick a model from the dropdown (start with *Sonnet 4.6* for everyday use)
+*3.* Say hello — tell it your name and what you work on. It'll remember you from now on.
 
-It knows our audio pipeline, PeerDB setup, driver caveats, and every repo's architecture — no re-explaining needed.
+That's it. You're in.
 
----
-
-:zap: *Quick model guide:*
-• *Haiku 4.5* — fast answers, simple lookups
-• *Sonnet 4.6* — everyday tasks (recommended default)
-• *Opus 4.6* — complex reasoning, architecture decisions
+:speech_balloon: *Or use it right here in Slack* — DM @hermesbot or mention it in any channel. Use `/model` to switch between models.
 
 ---
 
-:book: Full onboarding guide: ask Hermes _"Show me the onboarding guide"_ or check `arctan-infra/docs/onboarding-guide.md`
+:muscle: *How this boosts your workflow over time:*
+
+• *Week 1:* You stop context-switching to Plane, ClickHouse, and docs. Data questions that took 10 minutes now take 10 seconds.
+• *Week 2:* It knows your preferences, your repos, your style. Answers get sharper. You start chaining tasks — _"Check packet loss for ICCS users last week → find which orgs → create a Plane issue summarizing it."_
+• *Week 3+:* It becomes your first stop for anything Arctan — research, drafting, debugging context, cross-repo questions. The team's collective knowledge is always one message away.
+
+---
+
+:wrench: *One more thing — your local AI tools just got smarter too.*
+
+We've pushed context files (`AGENTS.md`, `.github/copilot-instructions.md`, `.zed/rules.md`) to all 11 repos. Just `git pull` on your projects — Claude Code, OpenCode, Zed, and VS Code Copilot will automatically pick them up. No more spending the first 5 minutes of every session re-explaining what Arctan is.
+
+---
+
+:zap: *Model cheat sheet:*
+• *Haiku 4.5* — instant answers, quick lookups
+• *Sonnet 4.5 / 4.6* — everyday workhorse (start here)
+• *Opus 4.5 / 4.6* — deep reasoning, architecture decisions, complex debugging
+
+:book: Full guide: <https://chat.getarctan.com|ask Hermes> _"Show me the onboarding guide"_ — or check `arctan-infra/docs/onboarding-guide.md`
+
+Questions? Just ask Hermes. Seriously — that's what it's for. :slightly_smiling_face:
