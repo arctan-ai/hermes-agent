@@ -1,58 +1,27 @@
-:wave: *Hey team — we've shipped something that's going to change how you work day-to-day.*
+:wave: *Hey team — meet Hermes, your AI assistant that actually knows Arctan.*
 
-We built an AI assistant called *Hermes* that's wired directly into our systems — Plane, ClickHouse, AWS, and all 11 repos. It's not another ChatGPT. It *knows Arctan* — the codebase, the data, the projects, and it remembers who you are.
+It's plugged into Plane, ClickHouse (88M+ rows), AWS, and all 11 repos. Ask it anything about our product, data, or codebase — in plain English.
 
-:point_right: *Here's what this means in practice:*
+:speech_balloon:  _"How many active users made calls this week, by organization?"_  →  runs the SQL, gives you the answer
+:speech_balloon:  _"Create an issue in Engineering: 'AGC regression on build 22631', high priority, assign to me"_  →  done, 5 seconds
+:speech_balloon:  _"How does PeerDB sync data from Postgres to ClickHouse?"_  →  it already knows
 
-Instead of opening ClickHouse, writing SQL, and figuring out the right table:
-> _"How many active users made calls this week, broken down by organization?"_
-Done. It writes the query, runs it, gives you the answer.
+:rocket: *Get started:*
+1️⃣ Go to <https://chat.getarctan.com|chat.getarctan.com>  →  sign in with your `@arctan.ai` Google account
+2️⃣ Pick *Sonnet 4.6* from the model dropdown (or Haiku for quick lookups, Opus for deep reasoning)
+3️⃣ Tell it your name and what you work on — it remembers you across sessions
 
-Instead of switching to Plane, searching, creating, filling fields:
-> _"Create an issue in Engineering: 'AGC regression on build 22631' with high priority, assign to me"_
-Created. Link back. 5 seconds.
+Or just DM *@hermesbot* right here in Slack. Type `/model` to switch models.
 
-Instead of asking around "hey does anyone know how the PeerDB sync works":
-> _"Explain how data flows from Postgres to ClickHouse through PeerDB. I'm seeing a delay."_
-It knows. It's read every repo, every doc, every config.
+:muscle: *It gets better the more you use it:*
+Week 1 → no more context-switching to Plane, ClickHouse, or docs
+Week 2 → it knows your preferences and repos, answers get sharper
+Week 3+ → your first stop for anything Arctan — research, data, cross-repo questions
 
----
+:wrench: *One more thing* — we pushed `AGENTS.md` to all 11 repos. Just `git pull` and your AI tools (Claude Code, OpenCode, Zed, Copilot) will know each project's architecture automatically.
 
-:rocket: *Get started now (2 minutes):*
+:books: *Next steps:*
+:one:  Read the *Onboarding Guide* — ask Hermes _"show me the onboarding guide"_ or see `arctan-infra/docs/onboarding-guide.md`
+:two:  When you're ready, the *Context Efficiency Guide* covers optimizing your local AI tools — `arctan-infra/docs/token-savings-guide.md`
 
-*1.* Go to <https://chat.getarctan.com|chat.getarctan.com> → sign in with your *@arctan.ai* Google account
-*2.* Pick a model from the dropdown (start with *Sonnet 4.6* for everyday use)
-*3.* Say hello — tell it your name and what you work on. It'll remember you from now on.
-
-That's it. You're in.
-
-:speech_balloon: *Or use it right here in Slack* — DM @hermesbot or mention it in any channel. Use `/model` to switch between models.
-
----
-
-:muscle: *How this boosts your workflow over time:*
-
-• *Week 1:* You stop context-switching to Plane, ClickHouse, and docs. Data questions that took 10 minutes now take 10 seconds.
-• *Week 2:* It knows your preferences, your repos, your style. Answers get sharper. You start chaining tasks — _"Check packet loss for ICCS users last week → find which orgs → create a Plane issue summarizing it."_
-• *Week 3+:* It becomes your first stop for anything Arctan — research, drafting, debugging context, cross-repo questions. The team's collective knowledge is always one message away.
-
----
-
-:zap: *Model cheat sheet:*
-• *Haiku 4.5* — instant answers, quick lookups
-• *Sonnet 4.5 / 4.6* — everyday workhorse (start here)
-• *Opus 4.5 / 4.6* — deep reasoning, architecture decisions, complex debugging
-
----
-
-:books: *What to read next:*
-
-This announcement is *Step 1* — now you know what Hermes is and how to get in.
-
-:one: *<https://chat.getarctan.com|Step 2: Onboarding Guide>* (`arctan-infra/docs/onboarding-guide.md`)
-Everything you can do with Hermes — real examples for Engineering, Data Science, Business, and Infra. Slack commands, access levels, tips for better results. Read this first.
-
-:two: *Step 3: Context Efficiency Guide* (`arctan-infra/docs/token-savings-guide.md`)
-Optimize your *local* AI tools (Claude Code, OpenCode, Zed, VS Code). We've already pushed context files to all 11 repos — this guide covers how to configure your personal setup so every AI session starts smart from the first message. Read this after you've used Hermes for a day or two.
-
-Questions? Just ask Hermes — seriously, that's what it's for. :slightly_smiling_face:
+Questions? Ask Hermes. That's literally what it's for :slightly_smiling_face:
